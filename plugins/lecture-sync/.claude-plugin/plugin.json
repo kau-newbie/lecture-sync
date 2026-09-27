@@ -1,0 +1,8 @@
+{
+  "name": "lecture-sync",
+  "version": "0.1.0",
+  "description": "강의자료 폴더의 변경을 감지해 장(슬라이드)별 정리 문서, 지식 그래프 아티팩트, Gmail 알림을 만듭니다.",
+  "author": {
+    "name": "kau-newbie"
+  }
+}

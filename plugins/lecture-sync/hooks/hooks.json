@@ -1,0 +1,18 @@
+{
+  "description": "세션을 시작할 때 강의자료 폴더의 변경을 확인합니다. .lecture-sync.json이 없는 폴더에서는 아무 동작도 하지 않습니다.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/detect.py\"",
+            "timeout": 60,
+            "statusMessage": "강의자료 변경 확인 중..."
+          }
+        ]
+      }
+    ]
+  }
+}

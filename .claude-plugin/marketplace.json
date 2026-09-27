@@ -1,0 +1,14 @@
+{
+  "name": "lecture-sync",
+  "description": "강의자료 변경을 감지해 슬라이드 정리 문서, 지식 그래프, 알림 메일을 만드는 플러그인",
+  "owner": {
+    "name": "lecture-sync"
+  },
+  "plugins": [
+    {
+      "name": "lecture-sync",
+      "source": "./plugins/lecture-sync",
+      "description": "새 강의자료를 감지해 장별 정리 문서 작성, 지식 그래프 갱신, Gmail 알림까지 진행합니다."
+    }
+  ]
+}
