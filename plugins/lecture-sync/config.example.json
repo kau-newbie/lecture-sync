@@ -1,6 +1,9 @@
 {
   "course": "과목 이름",
   "notify_to": "받을 Gmail 주소",
-  "extensions": [".pptx", ".ppt", ".pdf"],
-  "summary_reference": "3주차/기존_정리문서.docx"
+  "extensions": [
+    ".pptx",
+    ".ppt",
+    ".pdf"
+  ]
 }
