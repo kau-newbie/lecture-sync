@@ -136,11 +136,11 @@ plugins/lecture-sync/
 
 먼저, 아래와 같은 강의자료 지식 그래프를 생성합니다.
 
-![지식그래프예시](./example/img/example1.png)
+![지식그래프예시](./example/img/example2.png)
 
 - 마우스를 올려두면, 이웃 노드들만 밝게 표시됩니다.
 
-![정리노트예시](./example/img/example2.png)
+![정리노트예시](./example/img/example1.png)
  
 - 다음과 같이 매 강의자료마다 정리됩니다. 강의자료(pdf, pptx)의 페이지별로 아래와 같이 구성됩니다.
 	- 번역
