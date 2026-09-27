@@ -86,3 +86,7 @@ plugins/lecture-sync/
   scripts/notify.py                 Gmail 발송
   config.example.json               과목 설정 예시
 ```
+
+## 라이선스
+
+MIT 라이선스입니다. 자세한 내용은 `LICENSE` 파일에 있습니다.
