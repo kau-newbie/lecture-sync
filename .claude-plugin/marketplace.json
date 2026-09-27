@@ -1,8 +1,8 @@
 {
-  "name": "lecture-sync",
-  "description": "강의자료 변경을 감지해 슬라이드 정리 문서, 지식 그래프, 알림 메일을 만드는 플러그인",
+  "name": "kau-newbie",
+  "description": "kau-newbie가 만든 Claude Code 플러그인 모음",
   "owner": {
-    "name": "lecture-sync"
+    "name": "kau-newbie"
   },
   "plugins": [
     {

@@ -20,7 +20,7 @@
 
 ```bash
 claude plugin marketplace add kau-newbie/lecture-sync
-claude plugin install lecture-sync@lecture-sync
+claude plugin install lecture-sync@kau-newbie
 ```
 
 ## 비밀번호 등록
