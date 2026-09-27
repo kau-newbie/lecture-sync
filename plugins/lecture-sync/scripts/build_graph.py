@@ -198,19 +198,6 @@ class Graph:
         items.append("<li><b>강조:</b> 항목을 선택하면 그 항목과 직접 이어진 항목과 선만 남고, 선 위에 관계 설명이 나타납니다. 같은 항목을 다시 선택하거나 빈 곳을 선택하면 해제됩니다.</li>")
         return "\n".join(items)
 
-    def table(self):
-        kind = {"u": "전제·적용", "c": "비교·대조"}
-        rows = []
-        for e in self.E:
-            if e["t"] == "h":
-                continue
-            a, b = self.N[e["s"]], self.N[e["d"]]
-            rows.append(f'<tr><td>{esc(a["label"])}<span class="wk">{esc(a["weeks"])}</span></td>'
-                        f'<td class="ar">{"→" if e["t"] == "u" else "↔"}</td>'
-                        f'<td>{esc(b["label"])}<span class="wk">{esc(b["weeks"])}</span></td>'
-                        f'<td>{kind[e["t"]]}</td><td>{esc(e.get("label", ""))}</td><td>{esc(e.get("src") or "내용 기반")}</td></tr>')
-        return "\n".join(rows)
-
     def render(self, template):
         d = self.d
         log = "\n".join(f'<li><b>{esc(c["date"])}:</b> {esc(c["summary"])}</li>' for c in reversed(d.get("changelog", [])))
@@ -218,7 +205,7 @@ class Graph:
         data = json.dumps({k: dict(l=v["label"], w=v["weeks"], d=v["desc"]) for k, v in self.N.items()}, ensure_ascii=False)
         rep = {"{{TITLE}}": esc(d["title"]), "{{LEAD}}": d.get("lead", ""), "{{LEGEND}}": self.legend(),
                "{{SVG}}": self.svg(), "{{CAPTION}}": d.get("caption", ""), "{{READING}}": self.reading(),
-               "{{CHANGELOG}}": log or "<li>아직 수정 이력이 없습니다.</li>", "{{TABLE}}": self.table(),
+               "{{CHANGELOG}}": log or "<li>아직 수정 이력이 없습니다.</li>",
                "{{CHECKS}}": checks or "<li>확인이 필요한 점이 없습니다.</li>", "{{DATA}}": data.replace("</", "<\\/"),
                "{{NN}}": str(len(self.N)), "{{NE}}": str(len(self.E))}
         out = template

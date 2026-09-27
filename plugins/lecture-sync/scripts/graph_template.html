@@ -86,8 +86,7 @@ svg .elbl{fill:var(--ink);font-size:11.5px;font-weight:500;opacity:0;paint-order
 svg.hl .edge{opacity:.08}
 svg.hl .node{opacity:.28}
 svg.hl .edge.on{opacity:1}
-svg.hl .edge.on path{stroke-width:2.6}
-svg.hl .edge.on .elbl{opacity:1}
+svg.hl .edge.on pasvg.hl .edge.on .elbl{opacity:1}
 svg.hl .node.on{opacity:1}
 svg.hl .node.cur rect:not(.ring){stroke-width:3}
 .detail{margin-top:12px;min-height:3.4em;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px;color:var(--ink2);max-width:100%}
@@ -97,13 +96,7 @@ figcaption{margin-top:12px;max-width:80ch;color:var(--ink2);font-size:14px}
 .notes ul,.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:9px;font-size:14px}
 .notes li{max-width:70ch}
 .wide{grid-column:1 / -1}
-.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
-th,td{text-align:left;padding:7px 12px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-weight:700;background:var(--lane);color:var(--ink);white-space:nowrap}
-tr:last-child td{border-bottom:0}
-td.ar{text-align:center;color:var(--muted)}
-.wk{display:block;font-size:11px;color:var(--muted)}
 code{font-family:"IBM Plex Sans KR",monospace;font-size:.92em;background:var(--lane);padding:1px 5px;border-radius:4px}
 </style>
 <main>
@@ -135,18 +128,6 @@ code{font-family:"IBM Plex Sans KR",monospace;font-size:.92em;background:var(--l
 <ul>
 {{CHANGELOG}}
 </ul>
-</section>
-
-<section class="wide">
-<h2>연결 목록</h2>
-<div class="tbl">
-<table>
-<thead><tr><th>항목</th><th></th><th>항목</th><th>관계</th><th>설명</th><th>확인한 근거</th></tr></thead>
-<tbody>
-{{TABLE}}
-</tbody>
-</table>
-</div>
 </section>
 
 <section class="wide">
