@@ -13,7 +13,8 @@ graph.json 형식:
   "viewBox": [x, y, 너비, 높이],
   "groups": [{"id": 1, "label": "1주차", "special": true}, ...],   # id 1~6. special은 id 1에만 쓴다.
   "hulls":  [{"x":, "y":, "w":, "h":, "label": "", "special": false}, ...],
-  "nodes":  [{"id":, "label":, "weeks":, "group": 1~6, "x":, "y":, "w":, "desc":, "ring": false}, ...],
+  "nodes":  [{"id":, "label":, "weeks":, "group": 1~6, "x":, "y":, "w":, "desc":, "ring": false,
+              "refs": [{"label": "3주차 보충본 13~16장", "url": "보충본 URL#s13"}, ...]}, ...],   # refs는 선택
   "edges":  [{"s":, "d":, "t": "h|u|c", "label": "", "sides": "rl", "pts": [[x,y],...], "src": "근거"}, ...],
   "checks": ["확인이 필요한 점(HTML 가능)", ...],
   "changelog": [{"date": "2026-09-27", "summary": "..."}, ...],
@@ -196,13 +197,15 @@ class Graph:
                          f'{esc(sp["label"])}에서 나온 뒤 다시 나온 항목은 바깥에 붉은 테두리를 하나 더 붙였습니다.</li>')
         items.append("<li><b>선의 종류:</b> 회색 굵은 선은 분류의 하위 항목입니다. 화살표는 앞의 내용이 뒤의 내용에 쓰이거나 적용된다는 뜻입니다. 점선은 서로 비교되는 관계입니다.</li>")
         items.append("<li><b>강조:</b> 항목을 선택하면 그 항목과 직접 이어진 항목과 선만 남고, 선 위에 관계 설명이 나타납니다. 같은 항목을 다시 선택하거나 빈 곳을 선택하면 해제됩니다.</li>")
+        if any(n.get("refs") for n in self.N.values()):
+            items.append("<li><b>보충본 링크:</b> 보충본이 있는 항목은 설명 아래에 해당 장으로 가는 링크가 나타납니다. 항목을 선택해 고정한 뒤 링크를 누릅니다.</li>")
         return "\n".join(items)
 
     def render(self, template):
         d = self.d
         log = "\n".join(f'<li><b>{esc(c["date"])}:</b> {esc(c["summary"])}</li>' for c in reversed(d.get("changelog", [])))
         checks = "\n".join(f"<li>{c}</li>" for c in d.get("checks", []))
-        data = json.dumps({k: dict(l=v["label"], w=v["weeks"], d=v["desc"]) for k, v in self.N.items()}, ensure_ascii=False)
+        data = json.dumps({k: dict(l=v["label"], w=v["weeks"], d=v["desc"], r=v.get("refs", [])) for k, v in self.N.items()}, ensure_ascii=False)
         rep = {"{{TITLE}}": esc(d["title"]), "{{LEAD}}": d.get("lead", ""), "{{LEGEND}}": self.legend(),
                "{{SVG}}": self.svg(), "{{CAPTION}}": d.get("caption", ""), "{{READING}}": self.reading(),
                "{{CHANGELOG}}": log or "<li>아직 수정 이력이 없습니다.</li>",

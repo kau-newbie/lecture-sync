@@ -83,6 +83,29 @@ th{background:var(--lane);font-weight:700}
 code{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--lane);padding:1px 5px;border-radius:4px}
 sub,sup{font-size:.72em}
 .top{display:inline-block;margin-top:8px;font-size:13px}
+.flow .goal{margin:0 0 14px;max-width:80ch;color:var(--ink2)}
+.flow b{color:var(--ink);margin-right:4px}
+.flow ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.flow li{border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.flow li p{margin:6px 0 0;color:var(--ink2)}
+.fh{display:flex;gap:8px;align-items:baseline;font-weight:700;text-decoration:none;color:var(--ink)}
+.fh:hover{color:var(--acc)}
+.sid{flex:none;font-size:12px;font-weight:700;color:var(--acc);background:var(--acc-f);border-radius:5px;padding:0 7px}
+.rng{margin-left:auto;flex:none;font-size:12px;font-weight:500;color:var(--muted)}
+nav.toc li.grp{margin-top:8px}
+nav.toc li.grp:first-child{margin-top:0}
+nav.toc a.gh{font-weight:700;color:var(--ink)}
+nav.toc a.gh .no{color:var(--acc)}
+nav.toc li.grp ol{margin:2px 0 0;padding-left:10px;border-left:2px solid var(--line)}
+.sec{background:var(--acc-f);border:1px solid var(--acc);border-radius:12px;padding:16px clamp(16px,2.4vw,26px);scroll-margin-top:16px}
+.sec .k{margin:0 0 4px;font-size:12.5px;font-weight:700;letter-spacing:.04em;color:var(--acc)}
+.sec h2{font-size:20px;margin:0 0 8px}
+.sec p{margin:6px 0 0;max-width:80ch;color:var(--ink2)}
+.sec b,.concl b{color:var(--ink);margin-right:4px}
+.crumb{margin:0 0 4px;font-size:12.5px}
+.crumb a{color:var(--muted);text-decoration:none}
+.crumb a:hover{color:var(--acc);text-decoration:underline}
+.concl{margin:0 0 14px;padding:8px 12px;border-left:3px solid var(--acc);background:var(--lane);border-radius:0 6px 6px 0;font-size:14.5px;max-width:80ch;color:var(--ink2)}
 </style>
 <div class="wrap">
 <header>
@@ -92,6 +115,7 @@ sub,sup{font-size:.72em}
 <p class="links">{{LINKS}}</p>
 </header>
 
+{{FLOW}}
 <div class="intro">
 {{PREREQ}}
 {{UNVERIFIED}}

@@ -14,6 +14,9 @@ meta.json
   "title": "보충본 제목(2~4단어)",
   "quiz_title": "퀴즈 제목(2~4단어)",
   "lead": "이 강의가 다루는 내용 요약 문단",
+  "goal": "주차 목표: 이 강의 전체가 답하는 질문(선택)",
+  "sections": [{"id": "A", "title": "소목표 이름", "from": 1, "to": 7,
+                "question": "이 부분이 답하는 질문", "conclusion": "이 부분의 결론"}, ...],
   "prereq": ["먼저 알아야 할 내용", ...],
   "formulas": [{"name": "이름", "expr": "식", "note": "뜻"}, ...],
   "unverified": ["21장: 수식이 개체라 텍스트로 추출되지 않음", ...],
@@ -21,11 +24,13 @@ meta.json
 }
 
 slides-*.json (여러 파일로 나눠 써도 된다. 장 번호 순서로 합친다)
-[{"n": 1, "title": "제목", "original": "슬라이드 원문",
+[{"n": 1, "title": "제목", "conclusion": "이 장의 결론 한두 문장", "original": "슬라이드 원문",
   "translation": "번역", "background": "배경 설명", "detail": "상세 설명",
   "example": "예시·문제 풀이(선택)", "unverified": "확인하지 못한 부분(선택)",
   "brief": false}, ...]
 brief가 true인 장(표지, 목차 등)은 background, detail을 비워도 된다.
+sections가 있으면 소목표가 1장부터 마지막 장까지 빈틈과 겹침 없이 이어져야 하고,
+brief가 아닌 장은 conclusion을 써야 한다. sections가 없으면 목차를 장 번호 순서로만 만든다.
 
 quiz.json
 {"questions": [
@@ -151,8 +156,24 @@ def check(meta, slides, quiz):
         miss = sorted(set(range(1, max(nums) + 1)) - set(nums))
         if miss:
             errs.append(f"빠진 장: {miss}")
+    secs = meta.get("sections") or []
+    if secs:
+        nxt = 1
+        for sec in secs:
+            for k in ("id", "title", "question", "conclusion"):
+                if not sec.get(k):
+                    errs.append(f"소목표 {sec.get('id', '?')}: {k}가 비어 있습니다")
+            if sec.get("from") != nxt or not isinstance(sec.get("to"), int) or sec["to"] < sec["from"]:
+                errs.append(f"소목표 {sec.get('id', '?')}: 범위가 {nxt}장부터 이어지지 않습니다")
+                break
+            nxt = sec["to"] + 1
+        else:
+            if nums and nxt != max(nums) + 1:
+                errs.append(f"소목표가 {nxt - 1}장에서 끝납니다. 마지막 장은 {max(nums)}장입니다")
     for s in slides:
         need = ("title", "original", "translation") if s.get("brief") else ("title", "original", "translation", "background", "detail")
+        if secs and not s.get("brief"):
+            need += ("conclusion",)
         for k in need:
             if not s.get(k):
                 errs.append(f"{s['n']}장: {k}가 비어 있습니다")
@@ -198,20 +219,61 @@ def section(label, body, cls):
     return f'<div class="part {cls}"><h4>{label}</h4>{body}</div>' if body else ""
 
 
+def sec_of(secs, n):
+    return next((x for x in secs if x["from"] <= n <= x["to"]), None)
+
+
+def flow_box(meta):
+    """주차 목표와 소목표의 질문, 결론을 한곳에 보여 준다."""
+    secs = meta.get("sections") or []
+    if not secs and not meta.get("goal"):
+        return ""
+    goal = f'<p class="goal"><b>주차 목표</b> {inline(meta["goal"])}</p>' if meta.get("goal") else ""
+    items = "".join(
+        f'<li><a class="fh" href="#sec{esc(x["id"])}"><span class="sid">{esc(x["id"])}</span>{inline(x["title"])}'
+        f'<span class="rng">{x["from"]}~{x["to"]}장</span></a>'
+        f'<p><b>질문</b> {inline(x["question"])}</p><p><b>결론</b> {inline(x["conclusion"])}</p></li>'
+        for x in secs)
+    return f'<div class="intro"><section class="box wide flow"><h2>이번 강의의 흐름</h2>{goal}<ol>{items}</ol></section></div>'
+
+
 def notes_page(meta, slides):
-    toc = "\n".join(f'<li><a href="#s{s["n"]}"><span class="no">{s["n"]}</span>{inline(s["title"])}</a></li>' for s in slides)
+    secs = meta.get("sections") or []
+    item = lambda s: f'<li><a href="#s{s["n"]}"><span class="no">{s["n"]}</span>{inline(s["title"])}</a></li>'
+    if secs:
+        toc = "\n".join(
+            f'<li class="grp"><a class="gh" href="#sec{esc(x["id"])}"><span class="no">{esc(x["id"])}</span>{inline(x["title"])}</a>'
+            f'<ol>{"".join(item(s) for s in slides if x["from"] <= s["n"] <= x["to"])}</ol></li>'
+            for x in secs)
+    else:
+        toc = "\n".join(item(s) for s in slides)
     arts = []
     for s in slides:
+        sec = sec_of(secs, s["n"])
+        if sec and s["n"] == sec["from"]:
+            arts.append(f'<section class="sec" id="sec{esc(sec["id"])}"><p class="k">소목표 {esc(sec["id"])} · {sec["from"]}~{sec["to"]}장</p>'
+                        f'<h2>{inline(sec["title"])}</h2><p><b>질문</b> {inline(sec["question"])}</p>'
+                        f'<p><b>결론</b> {inline(sec["conclusion"])}</p></section>')
         orig = f'<div class="part orig"><h4>원문</h4><pre>{esc(s["original"])}</pre></div>'
         tr = section("번역", rich(s.get("translation")), "tr")
-        parts = [f'<div class="pair">{orig}{tr}</div>']
+        parts = []
+        if sec:
+            parts.append(f'<p class="crumb"><a href="#sec{esc(sec["id"])}">{esc(sec["id"])}. {inline(sec["title"])}</a></p>')
+        if s.get("conclusion"):
+            parts.append(f'<p class="concl"><b>이 장의 결론</b> {inline(s["conclusion"])}</p>')
+        parts.append(f'<div class="pair">{orig}{tr}</div>')
         parts.append(section("배경", rich(s.get("background")), "bg"))
         parts.append(section("상세 설명", rich(s.get("detail")), "dt"))
         parts.append(section("예시와 풀이", rich(s.get("example")), "ex"))
         if s.get("unverified"):
             parts.append(f'<p class="warn">확인하지 못한 부분: {inline(s["unverified"])}</p>')
         cls = "slide brief" if s.get("brief") else "slide"
-        arts.append(f'<article class="{cls}" id="s{s["n"]}"><h3><span class="no">{s["n"]}장</span>{inline(s["title"])}</h3>{"".join(parts)}</article>')
+        head = f'<h3><span class="no">{s["n"]}장</span>{inline(s["title"])}</h3>'
+        if sec:
+            parts.insert(1, head)
+        else:
+            parts.insert(0, head)
+        arts.append(f'<article class="{cls}" id="s{s["n"]}">{"".join(parts)}</article>')
     formulas = ""
     if meta.get("formulas"):
         rows = "".join(f'<tr><th scope="row">{inline(f["name"])}</th><td class="m">{inline(f["expr"])}</td><td>{inline(f.get("note", ""))}</td></tr>' for f in meta["formulas"])
@@ -224,6 +286,7 @@ def notes_page(meta, slides):
         "WEEK": esc(meta["week"]),
         "TOPIC": esc(meta["topic"]),
         "LEAD": inline(meta.get("lead", "")),
+        "FLOW": flow_box(meta),
         "LINKS": links(meta, "notes"),
         "NSLIDES": str(len(slides)),
         "PREREQ": prereq,

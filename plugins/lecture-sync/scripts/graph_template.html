@@ -92,6 +92,8 @@ svg.hl .node.on{opacity:1}
 svg.hl .node.cur rect:not(.ring){stroke-width:3}
 .detail{margin-top:12px;min-height:3.4em;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px;color:var(--ink2);max-width:100%}
 .detail b{color:var(--ink)}
+.detail .refs{display:block;margin-top:4px;font-size:13.5px;font-weight:500}
+.detail .refs a{color:var(--acc);margin-right:12px}
 figcaption{margin-top:12px;max-width:80ch;color:var(--ink2);font-size:14px}
 .notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:28px;margin-top:32px}
 .notes ul,.notes ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:9px;font-size:14px}
@@ -173,6 +175,17 @@ code{font-family:"IBM Plex Sans KR",monospace;font-size:.92em;background:var(--l
     detail.children[0].textContent = d.l;
     detail.children[1].textContent = d.w;
     detail.children[2].textContent = d.d;
+    if (d.r && d.r.length){
+      var box = document.createElement("span");
+      box.className = "refs";
+      d.r.forEach(function(r){
+        var a = document.createElement("a");
+        a.href = r.url; a.target = "_blank"; a.rel = "noopener";
+        a.textContent = r.label + " 보기";
+        box.appendChild(a);
+      });
+      detail.appendChild(box);
+    }
   }
   function reset(){
     clear();
