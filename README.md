@@ -12,8 +12,9 @@
 
 ## 준비물
 
-- Claude Code
-- Python 3 (추가 패키지 필요 없음)
+- Claude Code (Windows, WSL, Linux, macOS)
+- Python 3.9 이상. 추가 패키지는 설치하지 않아도 됩니다. PDF를 읽는 pypdf는 플러그인 안에 들어 있습니다.
+  - Windows는 https://www.python.org 에서 설치합니다. `python`, `py` 중 어느 명령이든 동작하면 됩니다.
 - Gmail 앱 비밀번호. Google 계정에서 2단계 인증을 켠 뒤 "앱 비밀번호" 메뉴에서 만듭니다.
 
 ## 설치
@@ -27,10 +28,16 @@ claude plugin install lecture-sync@kau-newbie
 
 ## 비밀번호 등록
 
-`~/.bashrc`(zsh는 `~/.zshrc`)에 한 줄을 추가하고 터미널을 다시 엽니다.
+**WSL, Linux, macOS:** `~/.bashrc`(zsh는 `~/.zshrc`)에 한 줄을 추가하고 터미널을 다시 엽니다.
 
 ```bash
 export GMAIL_APP_PASSWORD="앱 비밀번호 16자리"
+```
+
+**Windows:** PowerShell 또는 명령 프롬프트에서 실행하고, 터미널과 Claude Code를 다시 엽니다.
+
+```powershell
+setx GMAIL_APP_PASSWORD "앱 비밀번호 16자리"
 ```
 
 비밀번호는 이 환경 변수로만 읽습니다. 파일에 저장하거나 화면에 출력하지 않습니다.
@@ -122,7 +129,9 @@ plugins/lecture-sync/
   hooks/hooks.json                  세션 시작 시 변경 확인
   skills/sync/SKILL.md              정리 절차
   scripts/detect.py                 변경 감지와 처리 기록
+  scripts/py.sh                     운영체제에 맞는 Python을 찾아 스크립트 실행
   scripts/extract_slides.py         슬라이드별 글자 추출
+  scripts/_vendor/                  PDF 읽기용 pypdf와 라이선스 (수정하지 않음)
   scripts/build_graph.py            그래프 HTML 생성과 겹침 검사
   scripts/graph_template.html       그래프 페이지 틀
   scripts/build_notes.py            보충본과 퀴즈 HTML 생성과 검사

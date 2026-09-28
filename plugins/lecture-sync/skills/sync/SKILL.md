@@ -14,6 +14,7 @@ description: 강의자료 폴더에 새 파일이나 수정된 파일이 있을 
 - **사용자의 문체 지침을 따른다.** 사용자가 문체를 지정했으면(예: 쉽고 공식적인 문체) 보충본, 퀴즈, 메일에도 같이 적용한다.
 - **비밀번호를 출력하거나 파일에 적지 않는다.**
 - 이 스킬 폴더 기준 `../../scripts/`에 스크립트가 있다. 아래에서는 `$SCRIPTS`라고 부른다. 찾지 못하면 `find ~/.claude/plugins -name detect.py -path "*lecture-sync*"`로 찾는다.
+- 스크립트는 `python3`로 직접 부르지 않고 `bash "$SCRIPTS/py.sh"`로 실행한다. `py.sh`는 운영체제마다 다른 Python 명령(`python3`, `python`, `py -3`) 중 동작하는 것을 찾고, 출력을 UTF-8로 맞춘다. Windows에서도 같은 명령을 쓴다.
 
 ## 절차
 
@@ -32,7 +33,7 @@ description: 강의자료 폴더에 새 파일이나 수정된 파일이 있을 
 ### 2. 변경 확인
 
 ```bash
-python3 "$SCRIPTS/detect.py" --root "<과목 폴더>" --list
+bash "$SCRIPTS/py.sh" "$SCRIPTS/detect.py" --root "<과목 폴더>" --list
 ```
 
 `new`와 `modified` 목록이 나온다. 둘 다 비어 있으면 "새 자료가 없다"고 알리고 끝낸다. 목록이 있으면 처리할 파일을 사용자에게 한 줄로 알린 뒤 진행한다.
@@ -43,7 +44,7 @@ python3 "$SCRIPTS/detect.py" --root "<과목 폴더>" --list
 - 처리한 것으로 기록만 한다: 다음을 실행하고 끝낸다. 이후에 추가되는 파일만 처리한다.
 
 ```bash
-python3 "$SCRIPTS/detect.py" --root "<과목 폴더>" --baseline
+bash "$SCRIPTS/py.sh" "$SCRIPTS/detect.py" --root "<과목 폴더>" --baseline
 ```
 
 ### 3. 슬라이드 텍스트 추출
@@ -51,7 +52,7 @@ python3 "$SCRIPTS/detect.py" --root "<과목 폴더>" --baseline
 파일마다 실행한다.
 
 ```bash
-python3 "$SCRIPTS/extract_slides.py" "<파일>"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/extract_slides.py" "<파일>"
 ```
 
 - `.pptx`, `.pdf`는 장별 텍스트가 나온다. 출력의 "텍스트로 추출되지 않음" 줄은 그림, 수식 등이 있다는 뜻이다. 기록해 둔다.
@@ -87,7 +88,7 @@ python3 "$SCRIPTS/extract_slides.py" "<파일>"
 2. `translation`: 원문 전체를 사용자의 언어로 번역한다. 요약하지 않는다. 전문 용어는 원어를 그대로 쓰고, 일반적으로 쓰는 번역어가 없으면 번역어를 새로 만들지 않는다.
 3. `background`: 이 슬라이드가 왜 나오는지, 이해하는 데 필요한 앞 내용(이전 장, 이전 주차)을 설명한다.
 4. `detail`: 슬라이드 내용을 처음 배우는 사람이 따라올 수 있도록 단계별로 설명한다. 정의, 조건, 이유, 자주 헷갈리는 점을 적는다. 슬라이드에 적힌 것보다 자세하게 쓴다.
-5. `example`(선택): 슬라이드의 예시나 문제를 풀이한다. 숫자는 직접 계산해서 검증한다(`python3`로 계산해도 된다). 슬라이드에 예시가 없어도 개념 이해에 필요하면 짧은 예시를 만들고, 만든 예시라고 적는다.
+5. `example`(선택): 슬라이드의 예시나 문제를 풀이한다. 숫자는 직접 계산해서 검증한다(`bash "$SCRIPTS/py.sh" -c "..."`로 계산해도 된다). 슬라이드에 예시가 없어도 개념 이해에 필요하면 짧은 예시를 만들고, 만든 예시라고 적는다.
 6. `unverified`(선택): 이 장에서 텍스트로 추출되지 않은 그림, 수식 개체. 추정으로 채우지 않는다. 표준 수식으로 설명했다면 그렇게 적는다.
 7. 표지, 목차, 빈 장은 `brief: true`로 두고 원문과 번역만 쓴다.
 
@@ -102,9 +103,9 @@ python3 "$SCRIPTS/extract_slides.py" "<파일>"
 **검사와 발행**
 
 ```bash
-python3 "$SCRIPTS/build_notes.py" "<notes 폴더>" --check
-python3 "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind notes --out "<notes 폴더>/notes.html"
-python3 "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind quiz --out "<notes 폴더>/quiz.html"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_notes.py" "<notes 폴더>" --check
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind notes --out "<notes 폴더>/notes.html"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind quiz --out "<notes 폴더>/quiz.html"
 ```
 
 `--check`가 "문제 없음"을 출력할 때까지 고친다. 발행 순서는 다음과 같다. 두 페이지가 서로를 링크하기 때문이다.
@@ -135,7 +136,7 @@ python3 "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind quiz --out "<notes 폴
 6. 다음을 실행해 겹침이 0건이 될 때까지 좌표와 경로(`sides`, `pts`)를 고친다.
 
 ```bash
-python3 "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --check
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --check
 ```
 
 7. 보충본이 있는 항목에는 `refs`에 보충본의 해당 장 링크(`<notes_url>#s<장 번호>`)를 단다. 여러 장에 걸친 개념은 소목표 카드(`<notes_url>#sec<소목표 id>`)로 연결한다. 한 항목이 여러 주차에 걸치면 주차마다 링크를 하나씩 단다. 보충본 URL이 아직 없으면 4단계 발행 뒤에 단다.
@@ -143,7 +144,7 @@ python3 "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --c
 9. HTML을 만들고 발행한다.
 
 ```bash
-python3 "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --out "<과목 폴더>/.lecture-sync/graph.html"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --out "<과목 폴더>/.lecture-sync/graph.html"
 ```
 
 - `artifact_url`이 있으면 그 URL로 다시 발행한다(`url` 지정). 없으면 새로 발행하고, 나온 URL을 `graph.json`의 `artifact_url`에 저장한다.
@@ -154,7 +155,7 @@ python3 "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --o
 수신 주소는 `notify_to`다. 없으면 메일을 보내지 않고 사용자에게 알린다. 본문을 임시 파일에 쓰고 보낸다.
 
 ```bash
-python3 "$SCRIPTS/notify.py" --to "<notify_to>" --subject "[강의 정리] <과목> 자료 <N>건 반영" --body-file "<본문 파일>"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/notify.py" --to "<notify_to>" --subject "[강의 정리] <과목> 자료 <N>건 반영" --body-file "<본문 파일>"
 ```
 
 본문에 담을 내용은 다음과 같다.
@@ -172,7 +173,7 @@ python3 "$SCRIPTS/notify.py" --to "<notify_to>" --subject "[강의 정리] <과�
 보충본, 퀴즈, 그래프 반영에 성공한 파일만 기록한다. 실패한 파일은 기록하지 않아서 다음 세션에 다시 감지된다.
 
 ```bash
-python3 "$SCRIPTS/detect.py" --root "<과목 폴더>" --commit "<상대 경로>" ...
+bash "$SCRIPTS/py.sh" "$SCRIPTS/detect.py" --root "<과목 폴더>" --commit "<상대 경로>" ...
 ```
 
 `.ppt`는 안내 메일을 보낸 뒤 기록한다. `.pptx`로 저장한 파일은 내용이 달라서 새 파일로 다시 감지된다.
