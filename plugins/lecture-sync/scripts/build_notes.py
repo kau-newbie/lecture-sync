@@ -20,14 +20,15 @@ meta.json
   "prereq": ["먼저 알아야 할 내용", ...],
   "formulas": [{"name": "이름", "expr": "식", "note": "뜻"}, ...],
   "unverified": ["21장: 수식이 개체라 텍스트로 추출되지 않음", ...],
+  "transcript": "강의 영상 스크립트 출처 설명(선택). 예: LXP 3주차 강의 영상 자막",
   "notes_url": "", "quiz_url": "", "graph_url": ""
 }
 
 slides-*.json (여러 파일로 나눠 써도 된다. 장 번호 순서로 합친다)
 [{"n": 1, "title": "제목", "conclusion": "이 장의 결론 한두 문장", "original": "슬라이드 원문",
   "translation": "번역", "background": "배경 설명", "detail": "상세 설명",
-  "example": "예시·문제 풀이(선택)", "unverified": "확인하지 못한 부분(선택)",
-  "brief": false}, ...]
+  "example": "예시·문제 풀이(선택)", "lecture": "강의 영상에서 이 장에 대해 설명한 내용(선택)",
+  "unverified": "확인하지 못한 부분(선택)", "brief": false}, ...]
 brief가 true인 장(표지, 목차 등)은 background, detail을 비워도 된다.
 sections가 있으면 소목표가 1장부터 마지막 장까지 빈틈과 겹침 없이 이어져야 하고,
 brief가 아닌 장은 conclusion을 써야 한다. sections가 없으면 목차를 장 번호 순서로만 만든다.
@@ -264,6 +265,7 @@ def notes_page(meta, slides):
         parts.append(f'<div class="pair">{orig}{tr}</div>')
         parts.append(section("배경", rich(s.get("background")), "bg"))
         parts.append(section("상세 설명", rich(s.get("detail")), "dt"))
+        parts.append(section("강의 설명 (영상 스크립트)", rich(s.get("lecture")), "lec"))
         parts.append(section("예시와 풀이", rich(s.get("example")), "ex"))
         if s.get("unverified"):
             parts.append(f'<p class="warn">확인하지 못한 부분: {inline(s["unverified"])}</p>')
@@ -279,6 +281,7 @@ def notes_page(meta, slides):
         rows = "".join(f'<tr><th scope="row">{inline(f["name"])}</th><td class="m">{inline(f["expr"])}</td><td>{inline(f.get("note", ""))}</td></tr>' for f in meta["formulas"])
         formulas = f'<section class="box"><h2>핵심 공식</h2><div class="tw"><table><thead><tr><th>이름</th><th>식</th><th>뜻</th></tr></thead><tbody>{rows}</tbody></table></div></section>'
     prereq = f'<section class="box"><h2>먼저 알아야 할 내용</h2><ul>{li(meta["prereq"])}</ul></section>' if meta.get("prereq") else ""
+    tsrc = f'<section class="box"><h2>강의 영상 스크립트</h2><p>{inline(meta["transcript"])}</p></section>' if meta.get("transcript") else ""
     unv = f'<section class="box warnbox"><h2>확인하지 못한 부분</h2><ul>{li(meta["unverified"])}</ul></section>' if meta.get("unverified") else ""
     return {
         "TITLE": esc(meta["title"]),
@@ -291,7 +294,7 @@ def notes_page(meta, slides):
         "NSLIDES": str(len(slides)),
         "PREREQ": prereq,
         "FORMULAS": formulas,
-        "UNVERIFIED": unv,
+        "UNVERIFIED": tsrc + unv,
         "TOC": toc,
         "SLIDES": "\n".join(arts),
     }

@@ -8,7 +8,7 @@
     {
       "name": "lecture-sync",
       "source": "./plugins/lecture-sync",
-      "description": "새 강의자료를 감지해 장별 정리 문서 작성, 지식 그래프 갱신, Gmail 알림까지 진행합니다."
+      "description": "새 강의자료를 감지해 장별 보충본 또는 예시 위주 예제집 작성, 지식 그래프 갱신, Gmail 알림까지 진행합니다."
     }
   ]
 }
