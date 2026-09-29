@@ -11,6 +11,9 @@
   --baseline       현재 파일을 모두 처리 완료로 기록한다. 변경으로 보고하지 않는다.
   --commit [파일]  지정한 파일(폴더 기준 상대 경로)을 처리 완료로 기록한다. 파일을 생략하면 전부 기록한다.
 
+--list 출력의 style, transcript는 과목 설정(.lecture-sync.json)의 정리 방식과 강의 영상 스크립트 사용 여부다.
+값이 null이면 아직 정하지 않은 것이므로 스킬이 사용자에게 묻고 설정 파일에 저장한다.
+
 같은 내용의 파일(다운로드 중복 표시 "(1)" 등)은 sha256이 같으면 새 자료로 보지 않는다.
 훅으로 실행될 때는 어떤 경우에도 종료 코드 0으로 끝난다.
 """
@@ -26,6 +29,16 @@ CONFIG = ".lecture-sync.json"
 STATE_DIR = ".lecture-sync"
 MANIFEST = "manifest.json"
 DEFAULT_EXT = [".pptx", ".ppt", ".pdf"]
+STYLES = ("slides", "examples")
+
+
+def study_options(cfg):
+    """정리 방식과 강의 영상 스크립트 설정. 정하지 않았으면 None."""
+    style = cfg.get("style") if cfg.get("style") in STYLES else None
+    tr = cfg.get("transcript")
+    if not isinstance(tr, dict) or not isinstance(tr.get("enabled"), bool):
+        tr = None
+    return style, tr
 
 
 def find_root(start):
@@ -145,8 +158,10 @@ def main():
 
     first_run = not (root / STATE_DIR / MANIFEST).is_file()
     new, modified, _ = diff(current, manifest)
+    style, tr = study_options(cfg)
     if args.list:
         print(json.dumps({"root": str(root), "course": cfg.get("course", ""), "first_run": first_run,
+                          "style": style, "transcript": tr,
                           "new": new, "modified": modified}, ensure_ascii=False, indent=2))
         return
 
@@ -158,7 +173,8 @@ def main():
         context = (
             f"[lecture-sync] '{course}' 폴더가 처음 설정되었습니다. 기존 강의자료가 {len(new)}개 있습니다.\n"
             "사용자의 첫 요청을 처리하기 전에 /lecture-sync:sync 스킬을 실행하세요. "
-            "스킬의 '처음 실행' 절차에 따라 기존 자료를 모두 정리할지, 처리한 것으로 기록만 할지 사용자에게 묻습니다."
+            "스킬의 '처음 실행' 절차에 따라 기존 자료를 모두 정리할지, 처리한 것으로 기록만 할지, "
+            "정리 방식(장별 보충본 또는 예시 위주 예제집)과 강의 영상 스크립트 사용 여부를 사용자에게 묻습니다."
         )
         print(json.dumps({
             "systemMessage": f"lecture-sync: '{course}' 폴더를 처음 확인했습니다. 기존 자료 {len(new)}개.",
@@ -170,7 +186,9 @@ def main():
         f"[lecture-sync] '{course}' 폴더에서 처리하지 않은 강의자료 {len(lines)}건을 감지했습니다.\n"
         + "\n".join(lines)
         + "\n사용자의 첫 요청을 처리하기 전에 /lecture-sync:sync 스킬을 실행하세요. "
-          "장별 정리 문서 작성, 지식 그래프 갱신, 알림 메일 발송까지 진행합니다. "
+          + ("정리 방식과 강의 영상 스크립트 사용 여부가 아직 정해지지 않았으므로 먼저 사용자에게 묻습니다. "
+             if style is None or tr is None else "")
+        + "정리 문서 작성, 지식 그래프 갱신, 알림 메일 발송까지 진행합니다. "
           "시작하기 전에 처리할 파일을 사용자에게 한 줄로 알립니다."
     )
     print(json.dumps({

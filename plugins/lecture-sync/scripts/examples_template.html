@@ -1,0 +1,168 @@
+<title>{{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 왼쪽에 고정 목차, 오른쪽에 예제 본문. 좁은 화면에서는 한 열. 도면 느낌의 청색 선과 강조용 주황색 */
+:root {
+  --bg: #f3f5f7;
+  --surface: #ffffff;
+  --ink: #16212b;
+  --muted: #55646f;
+  --line: #c7d0d8;
+  --accent: #1c5a8c;
+  --signal: #a95a12;
+  --code-bg: #edf1f4;
+  --tag-bg: #e2eaf1;
+  --warn-bg: #fbf1e6;
+  --hl-k: #1c5a8c;
+  --hl-n: #9a4d0c;
+  --hl-c: #6a7680;
+  --hl-s: #2e6b3f;
+  --hl-t: #6b3fa0;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --s-1: 0.8125rem;
+  --s0: 1rem;
+  --s1: 1.1875rem;
+  --s2: 1.5rem;
+  --s3: 2.25rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161c; --surface: #172029; --ink: #e2e8ee; --muted: #9aa9b5; --line: #2e3a46;
+    --accent: #72b1e6; --signal: #e39a55; --code-bg: #0c1218; --tag-bg: #1f2e3b; --warn-bg: #2a2118;
+    --hl-k: #7fb8ea; --hl-n: #e8a25f; --hl-c: #7d8b96; --hl-s: #8cc79a; --hl-t: #c3a3ec;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161c; --surface: #172029; --ink: #e2e8ee; --muted: #9aa9b5; --line: #2e3a46;
+  --accent: #72b1e6; --signal: #e39a55; --code-bg: #0c1218; --tag-bg: #1f2e3b; --warn-bg: #2a2118;
+  --hl-k: #7fb8ea; --hl-n: #e8a25f; --hl-c: #7d8b96; --hl-s: #8cc79a; --hl-t: #c3a3ec;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: var(--s0); line-height: 1.7; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 80px; display: grid; grid-template-columns: 1fr; gap: 32px; }
+@media (min-width: 1000px) { .wrap { grid-template-columns: 240px minmax(0, 1fr); padding-inline: 24px; } }
+nav.toc { font-size: var(--s-1); }
+@media (min-width: 1000px) { nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); align-self: start; max-height: calc(100vh - 32px); overflow-y: auto; } }
+nav.toc h2 { font-size: var(--s-1); letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+nav.toc ol { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 2px; }
+nav.toc a { color: var(--ink); text-decoration: none; display: grid; grid-template-columns: 2.2em 1fr; padding: 3px 6px; border-radius: 6px; }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--tag-bg); outline: none; }
+nav.toc a span { color: var(--muted); font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+nav.toc .part { font-weight: 600; color: var(--accent); margin-top: 8px; padding-left: 6px; }
+main { min-width: 0; display: grid; gap: 56px; }
+header.hero { display: grid; gap: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+header.hero .eyebrow { font-family: var(--f-mono); font-size: var(--s-1); color: var(--accent); letter-spacing: .06em; }
+header.hero h1 { font-size: var(--s3); line-height: 1.2; margin: 0; text-wrap: balance; font-weight: 700; }
+header.hero p { margin: 0; max-width: 68ch; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: var(--s-1); color: var(--muted); }
+h2 { font-size: var(--s2); line-height: 1.3; margin: 0; text-wrap: balance; }
+h3 { font-size: var(--s1); margin: 28px 0 8px; }
+h4 { font-size: var(--s0); margin: 20px 0 6px; }
+p, li, dd { max-width: 70ch; }
+section.ex, section.intro { min-width: 0; }
+.ex-head { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.ex-no { font-family: var(--f-mono); font-size: var(--s-1); color: var(--signal); letter-spacing: .05em; font-weight: 600; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 0; padding: 0; list-style: none; }
+.tags li { background: var(--tag-bg); border-radius: 999px; padding: 1px 10px; font-size: var(--s-1); }
+.src { font-size: var(--s-1); color: var(--muted); margin: 0; }
+.part-title { font-size: var(--s-1); letter-spacing: .1em; color: var(--accent); font-weight: 700; border-top: 1px solid var(--line); padding-top: 12px; margin-bottom: -32px; }
+dl.terms { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+dl.terms dt { font-weight: 600; font-family: var(--f-mono); font-size: .95em; }
+dl.terms dd { margin: 0; }
+@media (max-width: 560px) { dl.terms { grid-template-columns: 1fr; } dl.terms dd { margin-bottom: 8px; } }
+figure { margin: 8px 0 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; }
+figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink); font-family: var(--f-body); }
+figcaption { font-size: var(--s-1); color: var(--muted); margin-top: 10px; }
+svg .blk { fill: var(--surface); stroke: currentColor; stroke-width: 1.5; }
+svg .blk2 { fill: var(--tag-bg); stroke: currentColor; stroke-width: 1.5; }
+svg .ff { fill: var(--tag-bg); stroke: var(--accent); stroke-width: 2; }
+svg .w { fill: none; stroke: currentColor; stroke-width: 1.5; }
+svg .wb { fill: none; stroke: currentColor; stroke-width: 3; }
+svg .hot { fill: none; stroke: var(--signal); stroke-width: 2.5; }
+svg .dash { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+svg text { fill: currentColor; font-size: 13px; }
+svg text.s { font-size: 11px; fill: var(--muted); }
+svg text.m { font-family: var(--f-mono); font-size: 12px; }
+svg text.h { fill: var(--signal); font-weight: 600; }
+svg text.a { fill: var(--accent); font-weight: 600; }
+svg .st { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .st2 { fill: var(--tag-bg); stroke: var(--signal); stroke-width: 2.5; }
+svg .dot { fill: currentColor; }
+svg .fillc { fill: currentColor; }
+ol.flow { padding-left: 1.4em; display: grid; gap: 4px; margin: 0; }
+.codebox { position: relative; margin-top: 8px; }
+.codebox .fname { font-family: var(--f-mono); font-size: var(--s-1); color: var(--muted); background: var(--code-bg); border: 1px solid var(--line); border-bottom: none; border-radius: 8px 8px 0 0; padding: 4px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.codebox button { font: inherit; font-size: var(--s-1); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 1px 10px; cursor: pointer; }
+.codebox button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 0 0 8px 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--f-mono); font-size: 13px; line-height: 1.55; tab-size: 4; }
+pre code { font-family: inherit; background: none; padding: 0; }
+code { font-family: var(--f-mono); font-size: .92em; background: var(--code-bg); padding: 0 4px; border-radius: 4px; }
+.hljs-keyword, .hljs-built_in { color: var(--hl-k); font-weight: 600; }
+.hljs-number { color: var(--hl-n); }
+.hljs-comment { color: var(--hl-c); font-style: normal; }
+.hljs-string { color: var(--hl-s); }
+.hljs-meta, .hljs-type, .hljs-variable { color: var(--hl-t); }
+.tblwrap { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: var(--s-1); min-width: 100%; }
+th, td { border: 1px solid var(--line); padding: 5px 10px; text-align: left; vertical-align: top; }
+th { background: var(--tag-bg); font-weight: 600; }
+td.m, th.m { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+td.on { color: var(--signal); font-weight: 600; }
+.note { background: var(--warn-bg); border-left: 3px solid var(--signal); border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 16px; }
+.note h4 { margin: 0 0 4px; }
+.note ul { margin: 0; padding-left: 1.2em; }
+.preview { display: inline-block; font-size: var(--s-1); color: var(--signal); border: 1px solid var(--signal); border-radius: 999px; padding: 0 8px; margin-left: 6px; vertical-align: middle; }
+.grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 820px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+.grid2 > * { min-width: 0; }
+a { color: var(--accent); }
+footer { font-size: var(--s-1); color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.figs { display: grid; gap: 16px; }
+.body > :first-child { margin-top: 0; }
+.body p { margin: 0 0 10px; }
+.body ul, .body ol { margin: 0 0 10px; padding-left: 1.3em; }
+.body.lec { border-left: 3px solid var(--hl-s); padding-left: 14px; }
+.tw { overflow-x: auto; margin: 8px 0; }
+.math { margin: 6px 0 10px; padding: 8px 12px; background: var(--code-bg); border-radius: 6px; overflow-x: auto; white-space: nowrap; font-family: var(--f-mono); }
+.warnbox { background: var(--warn-bg); border-left: 3px solid var(--signal); border-radius: 0 8px 8px 0; padding: 12px 16px; }
+.warnbox h2 { font-size: var(--s1); }
+.links a { margin-right: 4px; }
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="목차">
+  <h2>목차</h2>
+  <ol>
+{{TOC}}
+  </ol>
+</nav>
+<main>
+<header class="hero">
+  <div class="eyebrow">{{EYEBROW}}</div>
+  <h1>{{TITLE}}</h1>
+  <p>{{LEAD}}</p>
+  <div class="meta">{{INFO}}<span>예제 {{NEX}}개</span></div>
+  <p class="links">{{LINKS}}</p>
+</header>
+{{INTRO}}
+{{EXAMPLES}}
+</main>
+</div>
+{{HLJS}}
+<script>
+try { if (window.hljs) document.querySelectorAll('pre code[class^="language-"]').forEach(function (el) { hljs.highlightElement(el); }); } catch (e) {}
+document.querySelectorAll('button.copy').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var code = btn.closest('.codebox').querySelector('code');
+    function done(ok) { btn.textContent = ok ? '복사됨' : '선택됨'; setTimeout(function () { btn.textContent = '복사'; }, 1500); }
+    function fallback() { var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); done(false); }
+    try { navigator.clipboard.writeText(code.textContent).then(function () { done(true); }, fallback); } catch (e) { fallback(); }
+  });
+});
+</script>
