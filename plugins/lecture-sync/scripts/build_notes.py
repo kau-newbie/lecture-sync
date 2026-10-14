@@ -35,6 +35,19 @@ drawn이면 "설명용 도식"으로 표시한다. SVG에는 <script>, <style>, 
 .png/.jpg/.gif/.webp는 base64로 페이지에 넣는다. 직접 그린 SVG는 템플릿의 클래스(text, .mut, .ln, .lna,
 .lnw, .bx, .bxa, .bxw, .bxt, .dot, .dota, .dotw, .dott, .dash)와 화살표 marker(#ar, #ara, #arw)를 쓰면
 밝은 테마와 어두운 테마에서 모두 보인다. 슬라이드에서 확인하지 못한 그림 내용을 추정으로 그리지 않는다.
+인터랙티브 그림(재생, 한 단계씩, 슬라이더)도 figures에 넣을 수 있다.
+- {"from": "drawn"|"example", "caption": "...", "timeline": {...}}: 시간에 따른 스케줄(Gantt).
+  timeline = {"T": 칸 수, "rows": [{"id": "T1", "label": "T1 (p=4)", "short": "T1", "base": 1}, ...],
+  "cells": {"T1": ["", "R", "W", "C:Q", "B", "K", "D", ...]}, "res": ["Q", "V"],
+  "prio": {"T1": [현재 우선순위 또는 null, ...]}, "marks": [{"row": "T1", "t": 0, "type": "rel|dl|done|miss"}],
+  "notes": {"3": "구간 3~4의 설명"}, "intro": "시작 설명", "t0": 0, "cw": 28, "lw": 92, "tick": 1,
+  "scale": 1, "unit": "ms", "start": 0}  (scale: 눈금 1칸의 실제 값, start: 처음 보여 줄 위치,
+  reslabel: "C:이름" 칸의 범례 문구. 예: "{r} 실행". CPU를 행으로 둔 다중 프로세서 그림에 쓴다,
+  names: 칸 기호의 이름 바꾸기. 예: {"K": "NPS 때문에 blocked"})
+  칸 기호: R 실행, C:자원 자원을 lock한 채 실행, W 대기(선점됨), B blocked, K ceiling 때문에 blocked, D deadlock, "" 없음.
+  sched_sim.py가 이 형식을 만든다. 손으로 쓰지 말고 시뮬레이터로 만든다.
+- {"from": ..., "caption": "...", "frames": [{"svg": "<svg ...>", "text": "이 단계 설명"}, ...]}: 단계별 그림.
+from이 example이면 "슬라이드 예제 재현"으로 표시한다. 인터랙티브 그림과 "wide": true인 그림은 본문 폭 전체를 쓴다.
 brief가 true인 장(표지, 목차 등)은 background, detail을 비워도 된다.
 sections가 있으면 소목표가 1장부터 마지막 장까지 빈틈과 겹침 없이 이어져야 하고,
 brief가 아닌 장은 conclusion을 써야 한다. sections가 없으면 목차를 장 번호 순서로만 만든다.
@@ -188,10 +201,29 @@ def check(meta, slides, quiz):
             if not s.get(k):
                 errs.append(f"{s['n']}장: {k}가 비어 있습니다")
         for j, f in enumerate(s.get("figures") or [], 1):
-            if f.get("from") not in ("slide", "drawn"):
-                errs.append(f"{s['n']}장 그림 {j}: from은 slide 또는 drawn이어야 합니다")
+            if f.get("from") not in ("slide", "drawn", "example"):
+                errs.append(f"{s['n']}장 그림 {j}: from은 slide, drawn, example 중 하나여야 합니다")
             if not f.get("caption"):
                 errs.append(f"{s['n']}장 그림 {j}: caption이 비어 있습니다")
+            if f.get("timeline") is not None:
+                tl = f["timeline"]
+                ids = [r.get("id") for r in tl.get("rows", [])]
+                if not isinstance(tl.get("T"), int) or not ids:
+                    errs.append(f"{s['n']}장 그림 {j}: timeline의 T 또는 rows가 잘못되었습니다")
+                for rid, cells in (tl.get("cells") or {}).items():
+                    if rid not in ids or len(cells) != tl.get("T"):
+                        errs.append(f"{s['n']}장 그림 {j}: timeline cells[{rid}]의 행 또는 길이가 잘못되었습니다")
+                    bad = [c for c in cells if c and c[0] not in "RWBKDC"]
+                    if bad:
+                        errs.append(f"{s['n']}장 그림 {j}: timeline 칸 기호가 잘못되었습니다 {bad[:3]}")
+                continue
+            if f.get("frames") is not None:
+                for k, fr in enumerate(f["frames"], 1):
+                    if not str(fr.get("svg", "")).lstrip().startswith("<svg") or SVG_BAD.search(fr.get("svg", "")):
+                        errs.append(f"{s['n']}장 그림 {j}: frames {k}의 svg가 잘못되었습니다")
+                    if not fr.get("text"):
+                        errs.append(f"{s['n']}장 그림 {j}: frames {k}의 text가 비어 있습니다")
+                continue
             svg = f.get("svg")
             if not svg and f.get("file", "").lower().endswith(".svg"):
                 fp = Path(meta.get("_dir", ".")) / f["file"]
@@ -256,8 +288,20 @@ SVG_BAD = re.compile(r"<\s*(script|style|foreignObject)\b", re.I)
 
 def figure(f, base):
     """그림 하나를 figure 요소로 만든다."""
-    tag = "슬라이드 원본" if f.get("from") == "slide" else "설명용 도식"
+    tag = {"slide": "슬라이드 원본", "example": "슬라이드 예제 재현"}.get(f.get("from"), "설명용 도식")
     cap = inline(f.get("caption", ""))
+    wide = " wide" if (f.get("wide") or f.get("timeline") is not None or f.get("frames") is not None) else ""
+    extag = " ex-tag" if f.get("from") == "example" else ""
+    if f.get("timeline") is not None or f.get("frames") is not None:
+        tag += " · 재생"
+    if f.get("timeline") is not None:
+        data = json.dumps(f["timeline"], ensure_ascii=False)
+        body = f'<div class="tl" data-tl="{esc(data)}"></div><noscript><p>이 그림은 JavaScript가 필요합니다.</p></noscript>'
+        return f'<figure class="fig{wide}{extag}">{body}<figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
+    if f.get("frames") is not None:
+        frs = "".join(f'<div class="fr"{"" if k == 0 else " hidden"}>{fr["svg"]}<p class="frt">{inline(fr["text"])}</p></div>'
+                      for k, fr in enumerate(f["frames"]))
+        return f'<figure class="fig{wide}{extag}"><div class="frm">{frs}</div><figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
     if f.get("svg"):
         body = f["svg"]
     else:
@@ -267,7 +311,7 @@ def figure(f, base):
         else:
             data = base64.b64encode(fp.read_bytes()).decode("ascii")
             body = f'<img src="data:{IMG_TYPES[fp.suffix.lower()]};base64,{data}" alt="{esc(f.get("caption", ""))}" loading="lazy">'
-    cls = "fig slide-img" if f.get("from") == "slide" else "fig"
+    cls = ("fig slide-img" if f.get("from") == "slide" else "fig") + wide + extag
     return f'<figure class="{cls}">{body}<figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
 
 

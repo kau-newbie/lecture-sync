@@ -124,6 +124,8 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/extract_slides.py" "<파일>"
 5. `lecture`(선택): 강의 영상 스크립트에서 이 장을 설명한 내용. 3-1단계를 진행했을 때만 쓴다.
 6. `example`(선택): 슬라이드의 예시나 문제를 풀이한다. 숫자는 직접 계산해서 검증한다(`bash "$SCRIPTS/py.sh" -c "..."`로 계산해도 된다). 슬라이드에 예시가 없어도 개념 이해에 필요하면 짧은 예시를 만들고, 만든 예시라고 적는다.
    - `figures`(선택): 그림. 슬라이드 원본 장 이미지(`{"from": "slide", "file": "fig/s4.png"}`)와 직접 그린 SVG 도식(`{"from": "drawn", "svg": "<svg ...>"}`)을 넣는다. 사용자가 그림을 많이 원하는 과목이면 장마다 넣는다. 형식과 SVG 클래스는 `build_notes.py` 맨 위 설명에 있다. 슬라이드에서 확인하지 못한 그림 내용을 추정으로 그리지 않는다.
+   - 시간에 따라 동작하는 내용(스케줄, 프로토콜, 반복 계산, 패킷 전달)은 재생 그림으로 만든다. `timeline`(시간별 실행 칸, 재생·한 단계·슬라이더)과 `frames`(단계별 SVG)를 쓴다. 스케줄 칸은 손으로 채우지 말고 `$SCRIPTS/sched_sim.py`(fixed priority, EDF, LST, 비선점, 보호 없음, PIP, PCP, PCE, deadlock 감지)로 계산하고, 슬라이드 예제의 완료 시각·response time과 같은지 확인한 뒤 쓴다. 슬라이드 예제를 재현했으면 `from: "example"`, 만든 예시면 `from: "drawn"`으로 표시한다.
+   - 슬라이드 원본 그림은 장 전체 이미지로 넣는다. Windows에서는 PowerPoint COM(`Slides(i).Export`)으로, WMF 그림은 System.Drawing으로 PNG를 만들 수 있다. 원본 파일은 열려 있을 수 있으므로 복사본을 읽기 전용으로 연다. 960×720 JPEG로 줄여 `fig/`에 둔다.
 7. `unverified`(선택): 이 장에서 텍스트로 추출되지 않은 그림, 수식 개체. 추정으로 채우지 않는다. 표준 수식으로 설명했다면 그렇게 적는다.
 8. 표지, 목차, 빈 장은 `brief: true`로 두고 원문과 번역만 쓴다.
 
