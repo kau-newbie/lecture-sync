@@ -28,7 +28,26 @@ slides-*.json (여러 파일로 나눠 써도 된다. 장 번호 순서로 합�
 [{"n": 1, "title": "제목", "conclusion": "이 장의 결론 한두 문장", "original": "슬라이드 원문",
   "translation": "번역", "background": "배경 설명", "detail": "상세 설명",
   "example": "예시·문제 풀이(선택)", "lecture": "강의 영상에서 이 장에 대해 설명한 내용(선택)",
-  "unverified": "확인하지 못한 부분(선택)", "brief": false}, ...]
+  "unverified": "확인하지 못한 부분(선택)", "figures": [그림, ...](선택), "brief": false}, ...]
+figures의 그림 하나는 {"from": "slide"|"drawn", "caption": "설명", "file": "fig/s4.png"} 또는
+{"from": "drawn", "caption": "설명", "svg": "<svg ...>...</svg>"} 이다. from이 slide면 "슬라이드 원본",
+drawn이면 "설명용 도식"으로 표시한다. SVG에는 <script>, <style>, <foreignObject>를 쓰지 않는다. file은 NOTES_DIR 기준 경로다. .svg는 본문에 그대로 넣고,
+.png/.jpg/.gif/.webp는 base64로 페이지에 넣는다. 직접 그린 SVG는 템플릿의 클래스(text, .mut, .ln, .lna,
+.lnw, .bx, .bxa, .bxw, .bxt, .dot, .dota, .dotw, .dott, .dash)와 화살표 marker(#ar, #ara, #arw)를 쓰면
+밝은 테마와 어두운 테마에서 모두 보인다. 슬라이드에서 확인하지 못한 그림 내용을 추정으로 그리지 않는다.
+인터랙티브 그림(재생, 한 단계씩, 슬라이더)도 figures에 넣을 수 있다.
+- {"from": "drawn"|"example", "caption": "...", "timeline": {...}}: 시간에 따른 스케줄(Gantt).
+  timeline = {"T": 칸 수, "rows": [{"id": "T1", "label": "T1 (p=4)", "short": "T1", "base": 1}, ...],
+  "cells": {"T1": ["", "R", "W", "C:Q", "B", "K", "D", ...]}, "res": ["Q", "V"],
+  "prio": {"T1": [현재 우선순위 또는 null, ...]}, "marks": [{"row": "T1", "t": 0, "type": "rel|dl|done|miss"}],
+  "notes": {"3": "구간 3~4의 설명"}, "intro": "시작 설명", "t0": 0, "cw": 28, "lw": 92, "tick": 1,
+  "scale": 1, "unit": "ms", "start": 0}  (scale: 눈금 1칸의 실제 값, start: 처음 보여 줄 위치,
+  reslabel: "C:이름" 칸의 범례 문구. 예: "{r} 실행". CPU를 행으로 둔 다중 프로세서 그림에 쓴다,
+  names: 칸 기호의 이름 바꾸기. 예: {"K": "NPS 때문에 blocked"})
+  칸 기호: R 실행, C:자원 자원을 lock한 채 실행, W 대기(선점됨), B blocked, K ceiling 때문에 blocked, D deadlock, "" 없음.
+  sched_sim.py가 이 형식을 만든다. 손으로 쓰지 말고 시뮬레이터로 만든다.
+- {"from": ..., "caption": "...", "frames": [{"svg": "<svg ...>", "text": "이 단계 설명"}, ...]}: 단계별 그림.
+from이 example이면 "슬라이드 예제 재현"으로 표시한다. 인터랙티브 그림과 "wide": true인 그림은 본문 폭 전체를 쓴다.
 brief가 true인 장(표지, 목차 등)은 background, detail을 비워도 된다.
 sections가 있으면 소목표가 1장부터 마지막 장까지 빈틈과 겹침 없이 이어져야 하고,
 brief가 아닌 장은 conclusion을 써야 한다. sections가 없으면 목차를 장 번호 순서로만 만든다.
@@ -50,6 +69,7 @@ mc의 answer는 0부터 센 보기 번호다.
 - **굵게**, `코드`, x_{i}(아래 첨자), 2^{1/n}(위 첨자)를 쓸 수 있다.
 """
 import argparse
+import base64
 import html
 import json
 import re
@@ -58,6 +78,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 KINDS = {"notes": "notes_template.html", "quiz": "quiz_template.html"}
+IMG_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp"}
 QTYPES = {"mc": "객관식", "tf": "O/X", "short": "서술", "calc": "계산"}
 
 
@@ -135,6 +156,7 @@ def rich(text):
 def load(d):
     d = Path(d)
     meta = json.loads((d / "meta.json").read_text(encoding="utf-8"))
+    meta["_dir"] = str(d)
     slides = []
     for f in sorted(d.glob("slides-*.json")):
         slides += json.loads(f.read_text(encoding="utf-8"))
@@ -178,6 +200,47 @@ def check(meta, slides, quiz):
         for k in need:
             if not s.get(k):
                 errs.append(f"{s['n']}장: {k}가 비어 있습니다")
+        for j, f in enumerate(s.get("figures") or [], 1):
+            if f.get("from") not in ("slide", "drawn", "example"):
+                errs.append(f"{s['n']}장 그림 {j}: from은 slide, drawn, example 중 하나여야 합니다")
+            if not f.get("caption"):
+                errs.append(f"{s['n']}장 그림 {j}: caption이 비어 있습니다")
+            if f.get("timeline") is not None:
+                tl = f["timeline"]
+                ids = [r.get("id") for r in tl.get("rows", [])]
+                if not isinstance(tl.get("T"), int) or not ids:
+                    errs.append(f"{s['n']}장 그림 {j}: timeline의 T 또는 rows가 잘못되었습니다")
+                for rid, cells in (tl.get("cells") or {}).items():
+                    if rid not in ids or len(cells) != tl.get("T"):
+                        errs.append(f"{s['n']}장 그림 {j}: timeline cells[{rid}]의 행 또는 길이가 잘못되었습니다")
+                    bad = [c for c in cells if c and c[0] not in "RWBKDC"]
+                    if bad:
+                        errs.append(f"{s['n']}장 그림 {j}: timeline 칸 기호가 잘못되었습니다 {bad[:3]}")
+                continue
+            if f.get("frames") is not None:
+                for k, fr in enumerate(f["frames"], 1):
+                    if not str(fr.get("svg", "")).lstrip().startswith("<svg") or SVG_BAD.search(fr.get("svg", "")):
+                        errs.append(f"{s['n']}장 그림 {j}: frames {k}의 svg가 잘못되었습니다")
+                    if not fr.get("text"):
+                        errs.append(f"{s['n']}장 그림 {j}: frames {k}의 text가 비어 있습니다")
+                continue
+            svg = f.get("svg")
+            if not svg and f.get("file", "").lower().endswith(".svg"):
+                fp = Path(meta.get("_dir", ".")) / f["file"]
+                svg = fp.read_text(encoding="utf-8") if fp.is_file() else None
+            if svg and SVG_BAD.search(svg):
+                errs.append(f"{s['n']}장 그림 {j}: SVG에 script, style, foreignObject를 쓸 수 없습니다")
+            if f.get("svg"):
+                if not str(f["svg"]).lstrip().startswith("<svg"):
+                    errs.append(f"{s['n']}장 그림 {j}: svg가 <svg로 시작하지 않습니다")
+            elif f.get("file"):
+                fp = Path(meta.get("_dir", ".")) / f["file"]
+                if not fp.is_file():
+                    errs.append(f"{s['n']}장 그림 {j}: 파일이 없습니다 {f['file']}")
+                elif fp.suffix.lower() not in IMG_TYPES and fp.suffix.lower() != ".svg":
+                    errs.append(f"{s['n']}장 그림 {j}: 지원하지 않는 형식입니다 {fp.suffix}")
+            else:
+                errs.append(f"{s['n']}장 그림 {j}: svg 또는 file이 필요합니다")
     for i, q in enumerate(quiz.get("questions", []), 1):
         t = q.get("type")
         if t not in QTYPES:
@@ -218,6 +281,38 @@ def li(items):
 
 def section(label, body, cls):
     return f'<div class="part {cls}"><h4>{label}</h4>{body}</div>' if body else ""
+
+
+SVG_BAD = re.compile(r"<\s*(script|style|foreignObject)\b", re.I)
+
+
+def figure(f, base):
+    """그림 하나를 figure 요소로 만든다."""
+    tag = {"slide": "슬라이드 원본", "example": "슬라이드 예제 재현"}.get(f.get("from"), "설명용 도식")
+    cap = inline(f.get("caption", ""))
+    wide = " wide" if (f.get("wide") or f.get("timeline") is not None or f.get("frames") is not None) else ""
+    extag = " ex-tag" if f.get("from") == "example" else ""
+    if f.get("timeline") is not None or f.get("frames") is not None:
+        tag += " · 재생"
+    if f.get("timeline") is not None:
+        data = json.dumps(f["timeline"], ensure_ascii=False)
+        body = f'<div class="tl" data-tl="{esc(data)}"></div><noscript><p>이 그림은 JavaScript가 필요합니다.</p></noscript>'
+        return f'<figure class="fig{wide}{extag}">{body}<figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
+    if f.get("frames") is not None:
+        frs = "".join(f'<div class="fr"{"" if k == 0 else " hidden"}>{fr["svg"]}<p class="frt">{inline(fr["text"])}</p></div>'
+                      for k, fr in enumerate(f["frames"]))
+        return f'<figure class="fig{wide}{extag}"><div class="frm">{frs}</div><figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
+    if f.get("svg"):
+        body = f["svg"]
+    else:
+        fp = Path(base) / f["file"]
+        if fp.suffix.lower() == ".svg":
+            body = fp.read_text(encoding="utf-8")
+        else:
+            data = base64.b64encode(fp.read_bytes()).decode("ascii")
+            body = f'<img src="data:{IMG_TYPES[fp.suffix.lower()]};base64,{data}" alt="{esc(f.get("caption", ""))}" loading="lazy">'
+    cls = ("fig slide-img" if f.get("from") == "slide" else "fig") + wide + extag
+    return f'<figure class="{cls}">{body}<figcaption><span class="ftag">{tag}</span>{cap}</figcaption></figure>'
 
 
 def sec_of(secs, n):
@@ -263,6 +358,9 @@ def notes_page(meta, slides):
         if s.get("conclusion"):
             parts.append(f'<p class="concl"><b>이 장의 결론</b> {inline(s["conclusion"])}</p>')
         parts.append(f'<div class="pair">{orig}{tr}</div>')
+        if s.get("figures"):
+            figs = "".join(figure(f, meta.get("_dir", ".")) for f in s["figures"])
+            parts.append(f'<div class="part figs"><h4>그림</h4><div class="figgrid">{figs}</div></div>')
         parts.append(section("배경", rich(s.get("background")), "bg"))
         parts.append(section("상세 설명", rich(s.get("detail")), "dt"))
         parts.append(section("강의 설명 (영상 스크립트)", rich(s.get("lecture")), "lec"))
