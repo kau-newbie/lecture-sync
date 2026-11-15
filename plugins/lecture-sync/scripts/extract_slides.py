@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 """강의 슬라이드 파일에서 슬라이드(장)별 텍스트를 뽑는다. 외부 패키지를 설치할 필요가 없다.
 
-사용: extract_slides.py 파일 [--json]
+사용: extract_slides.py 파일 [--json] [--pptx-out 경로]
 - .pptx: 슬라이드 번호 순서대로 문단 텍스트를 출력한다. 텍스트로 추출되지 않는 개체
   (그림, 수식, OLE 개체, 차트)의 개수도 슬라이드마다 표시한다.
 - .pdf: 쪽 단위로 출력한다. 쪽마다 그림 개수도 표시한다. 절반이 넘는 쪽에 반복되는
   그림(로고, 배경)은 세지 않는다. 함께 넣어 둔 pypdf(_vendor/)로 읽으므로 운영체제와
   관계없이 같은 결과가 나온다. PDF의 수식은 글자나 그림으로 들어 있어 따로 세지 못한다.
-- .ppt(구형): 읽을 수 없다. 종료 코드 2로 끝난다. .pptx로 저장해야 한다.
+- .ppt(구형): Windows PowerPoint로 복사본을 임시 폴더에서 .pptx로 변환한 뒤 .pptx와 같은
+  방식으로 읽는다. 원본은 수정하지 않는다. Windows 또는 WSL에서 PowerPoint가 설치되어
+  있어야 한다. 변환하지 못하면 종료 코드 2로 끝나고, 이때는 .pptx로 저장해야 한다.
+  --pptx-out 경로를 주면 변환한 .pptx를 그 경로에 남긴다(장 이미지를 만들 때 쓴다).
+  사용자가 PowerPoint를 이미 열어 둔 경우에는 변환 뒤에도 PowerPoint를 종료하지 않는다.
 """
 import html
 import json
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import zipfile
 from collections import Counter
 from pathlib import Path
@@ -96,17 +104,85 @@ def pdf_pages(path):
     return pages
 
 
+# 경로는 환경 변수로 넘긴다. 경로에 따옴표나 공백이 있어도 명령 문자열이 깨지지 않는다.
+PS_CONVERT = (
+    "$ErrorActionPreference='Stop';"
+    "$p=New-Object -ComObject PowerPoint.Application;"
+    "$wasOpen=($p.Presentations.Count -gt 0);"
+    "try{"
+    "$d=$p.Presentations.Open($env:LS_SRC,-1,0,0);"  # 읽기 전용, 창 없음
+    "$d.SaveAs($env:LS_DST,24);"  # 24 = ppSaveAsOpenXMLPresentation(.pptx)
+    "$d.Close()"
+    "}finally{if(-not $wasOpen){$p.Quit()}}"  # 사용자가 열어 둔 PowerPoint는 닫지 않는다.
+)
+
+
+def find_powershell():
+    for name in ("powershell.exe", "powershell", "pwsh.exe", "pwsh"):
+        found = shutil.which(name)
+        if found:
+            return found
+    return None
+
+
+def ppt_to_pptx(src, dst):
+    """구형 .ppt의 복사본을 PowerPoint(COM)로 .pptx로 변환한다. 원본은 건드리지 않는다."""
+    ps = find_powershell()
+    if not ps:
+        raise RuntimeError("구형 .ppt를 변환하려면 Windows 또는 WSL에서 PowerPoint가 필요합니다. PowerShell을 찾지 못했습니다.")
+    work = Path(tempfile.mkdtemp(prefix="lecture-sync-"))
+    try:
+        tmp_src, tmp_dst = work / "src.ppt", work / "out.pptx"
+        shutil.copyfile(src, tmp_src)
+        env = dict(os.environ, LS_SRC=str(tmp_src), LS_DST=str(tmp_dst))
+        env["WSLENV"] = ":".join(filter(None, [os.environ.get("WSLENV"), "LS_SRC/p", "LS_DST/p"]))  # WSL이면 Windows 경로로 바꿔 준다.
+        try:
+            r = subprocess.run([ps, "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", PS_CONVERT],
+                               env=env, capture_output=True, text=True, timeout=180)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("PowerPoint 변환이 180초 안에 끝나지 않았습니다. PowerPoint에 열린 대화 상자가 있는지 확인하세요.")
+        if r.returncode != 0 or not tmp_dst.exists():
+            tail = (r.stderr or r.stdout or "").strip().splitlines()[-3:]
+            raise RuntimeError("PowerPoint로 .ppt를 변환하지 못했습니다. PowerPoint가 설치되어 있는지 확인하세요. " + " ".join(tail))
+        shutil.copyfile(tmp_dst, dst)
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def ppt_slides(path, keep=None):
+    """.ppt를 임시 .pptx로 변환해 읽는다. keep이 있으면 변환한 .pptx를 그 경로에 남긴다."""
+    if keep:
+        ppt_to_pptx(path, keep)
+        return pptx_slides(keep)
+    fd, tmp = tempfile.mkstemp(suffix=".pptx", prefix="lecture-sync-")
+    os.close(fd)
+    try:
+        ppt_to_pptx(path, tmp)
+        return pptx_slides(tmp)
+    finally:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
     path = Path(sys.argv[1])
     suffix = path.suffix.lower()
-    if suffix == ".ppt":
-        print("구형 .ppt는 읽을 수 없습니다. PowerPoint에서 .pptx로 저장한 뒤 다시 실행하세요.", file=sys.stderr)
-        sys.exit(2)
+    keep = None
+    if "--pptx-out" in sys.argv:
+        i = sys.argv.index("--pptx-out")
+        if i + 1 >= len(sys.argv):
+            print("--pptx-out 뒤에 경로가 필요합니다.", file=sys.stderr)
+            sys.exit(2)
+        keep = Path(sys.argv[i + 1])
     try:
-        if suffix == ".pptx":
+        if suffix == ".ppt":
+            slides = ppt_slides(path, keep)
+        elif suffix == ".pptx":
             slides = pptx_slides(path)
         elif suffix == ".pdf":
             slides = pdf_pages(path)
