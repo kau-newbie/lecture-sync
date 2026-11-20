@@ -1,26 +1,26 @@
 ---
 name: sync
-description: 강의자료 폴더에 새 파일이나 수정된 파일이 있을 때 실행한다. 과목마다 고른 정리 방식에 따라 새 자료마다 장(슬라이드)별 보충본과 퀴즈 아티팩트를 만들거나, 과목의 예시 위주 예제집 아티팩트에 예제를 더한다. 선택하면 강의 영상 스크립트도 정리에 넣는다. 그리고 그 과목의 지식 그래프 아티팩트를 갱신하고, 링크와 수정 사항을 Gmail로 보낸다. 세션 시작 훅이 "[lecture-sync] ... 강의자료를 감지했습니다"라는 문구를 전달했을 때, 또는 사용자가 강의자료 정리, 그래프 갱신, 강의 동기화를 요청했을 때 쓴다.
+description: 강의자료 폴더에 새 파일이나 수정된 파일이 있을 때 실행한다. 과목마다 고른 정리 방식에 따라 새 자료마다 장(슬라이드)별 보충본과 퀴즈 아티팩트를 만들거나, 과목의 예시 위주 예제집 아티팩트에 예제를 더한다. 선택하면 강의 영상 스크립트도 정리에 넣는다. 그리고 그 과목의 지식 그래프 아티팩트를 갱신하고, 링크와 수정 사항을 Gmail로 보낸다. 세션 시작 훅이 "[study-highway] ... 강의자료를 감지했습니다"라는 문구를 전달했을 때, 또는 사용자가 강의자료 정리, 그래프 갱신, 강의 동기화를 요청했을 때 쓴다.
 ---
 
-# lecture-sync: 강의자료 동기화
+# study-highway: 강의자료 동기화
 
 새 강의자료를 감지해 정리 문서(장별 보충본과 퀴즈, 또는 예시 위주 예제집) 작성, 지식 그래프 갱신, 알림 메일 발송까지 진행한다.
 
 ## 원칙
 
-- **과목마다 따로 만든다.** 그래프, 보충본과 퀴즈 데이터, 기준 기록, 아티팩트 URL은 모두 과목 폴더의 `.lecture-sync/` 안에 있다. 다른 과목의 그래프를 복사하거나 참고해서 배치를 따라 하지 않는다. 과목마다 개념 구조가 다르므로, 그 과목 자료에 맞게 그룹, 묶음, 배치를 새로 설계한다.
+- **과목마다 따로 만든다.** 그래프, 보충본과 퀴즈 데이터, 기준 기록, 아티팩트 URL은 모두 과목 폴더의 `.study-highway/` 안에 있다. 다른 과목의 그래프를 복사하거나 참고해서 배치를 따라 하지 않는다. 과목마다 개념 구조가 다르므로, 그 과목 자료에 맞게 그룹, 묶음, 배치를 새로 설계한다.
 - **자료에서 확인한 것만 쓴다.** 슬라이드에서 추출되지 않은 그림, 수식, 개체는 추정으로 채우지 않는다. 확인하지 못했다고 보충본과 메일에 적는다.
 - **사용자의 문체 지침을 따른다.** 사용자가 문체를 지정했으면(예: 쉽고 공식적인 문체) 보충본, 퀴즈, 메일에도 같이 적용한다.
 - **비밀번호를 출력하거나 파일에 적지 않는다.**
-- 이 스킬 폴더 기준 `../../scripts/`에 스크립트가 있다. 아래에서는 `$SCRIPTS`라고 부른다. 찾지 못하면 `find ~/.claude/plugins -name detect.py -path "*lecture-sync*"`로 찾는다.
+- 이 스킬 폴더 기준 `../../scripts/`에 스크립트가 있다. 아래에서는 `$SCRIPTS`라고 부른다. 찾지 못하면 `find ~/.claude/plugins -name detect.py -path "*study-highway*"`로 찾는다.
 - 스크립트는 `python3`로 직접 부르지 않고 `bash "$SCRIPTS/py.sh"`로 실행한다. `py.sh`는 운영체제마다 다른 Python 명령(`python3`, `python`, `py -3`) 중 동작하는 것을 찾고, 출력을 UTF-8로 맞춘다. Windows에서도 같은 명령을 쓴다.
 
 ## 절차
 
 ### 1. 과목 폴더와 설정 확인
 
-과목 폴더는 `.lecture-sync.json`이 있는 폴더다. 현재 폴더에서 위로 올라가며 찾는다. 설정 항목은 다음과 같다.
+과목 폴더는 `.study-highway.json`이 있는 폴더다. 현재 폴더에서 위로 올라가며 찾는다. 설정 항목은 다음과 같다.
 
 | 항목 | 뜻 |
 |---|---|
@@ -58,7 +58,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/detect.py" --root "<과목 폴더>" --baseline
    - 사용하지 않는다.
    - Chrome에서 가져온다 / Edge에서 가져온다: 4단계 전에 "강의 영상 스크립트 수집" 절차를 진행한다. Claude in Chrome 확장 프로그램이 그 브라우저에 설치되어 있어야 한다고 함께 알린다.
 
-답은 `.lecture-sync.json`에 저장한다. 다른 항목은 그대로 두고 `style`, `transcript`만 더한다. 예: `"style": "examples", "transcript": {"enabled": true, "browser": "chrome"}`.
+답은 `.study-highway.json`에 저장한다. 다른 항목은 그대로 두고 `style`, `transcript`만 더한다. 예: `"style": "examples", "transcript": {"enabled": true, "browser": "chrome"}`.
 
 **처음 실행이 아닌데 `style`이나 `transcript`가 null인 경우:** 위 2, 3번 중 정하지 않은 것만 묻고 저장한다. 사용자가 나중에 방식을 바꾸고 싶다고 하면 설정 파일의 값을 고친다. 방식을 바꿔도 이미 만든 문서는 그대로 두고, 새 자료부터 새 방식으로 정리한다. 기존 자료도 새 방식으로 다시 정리할지는 사용자에게 묻는다.
 
@@ -83,7 +83,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/extract_slides.py" "<파일>"
    - `browser`가 `"edge"`이면 Edge에 Claude in Chrome 확장 프로그램이 설치되어 연결되어 있어야 한다. 연결되지 않으면 Chrome으로 진행할지 사용자에게 묻는다.
 2. 강의자료마다 해당 강의 영상 페이지를 찾는다. 사용자에게 강의 사이트 주소나 영상 페이지 주소를 묻는다. 로그인은 사용자가 브라우저에서 직접 한다. 비밀번호를 대신 입력하거나 저장하지 않는다.
 3. 페이지의 자막·스크립트 패널, 자막 텍스트 등 화면에 제공되는 텍스트를 읽는다. 자막이 없으면 "자막 없음"으로 기록하고 넘어간다.
-4. 읽은 텍스트를 `<과목 폴더>/.lecture-sync/transcripts/<id>.txt`에 저장한다. 첫 줄들에 영상 제목, 페이지 주소, 가져온 날짜를 적는다. `<id>`는 4단계의 강의자료 id와 같게 한다.
+4. 읽은 텍스트를 `<과목 폴더>/.study-highway/transcripts/<id>.txt`에 저장한다. 첫 줄들에 영상 제목, 페이지 주소, 가져온 날짜를 적는다. `<id>`는 4단계의 강의자료 id와 같게 한다.
 5. 스크립트는 음성 인식 결과일 수 있어 용어가 틀릴 수 있다. 슬라이드와 맞춰 확인되는 내용만 정리에 쓰고, 슬라이드와 다르게 말한 부분은 "강의에서는 ~라고 설명했다"처럼 출처를 밝혀 쓴다.
 6. 정리에 넣는 곳: 장별 보충본은 장마다 `lecture` 칸과 `meta.json`의 `transcript`(출처)에, 예제집은 예제의 `lecture` 칸과 `meta.json`의 `transcript`에 쓴다.
 
@@ -98,7 +98,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/extract_slides.py" "<파일>"
 - **보충본**: 슬라이드마다 원문, 번역, 배경, 상세 설명, 예시와 풀이를 담는다. 슬라이드가 많아도 한 페이지로 만든다. 페이지에 목차가 있다.
 - **퀴즈**: 보충본 내용을 잘 배웠는지 확인하는 문제와 해설을 담는다.
 
-데이터는 `<과목 폴더>/.lecture-sync/notes/<id>/`에 JSON으로 쓴다. `<id>`는 `w3-rtsensor3`처럼 주차와 파일 이름으로 짧게 정한다. 파일 형식과 본문 표기법은 `$SCRIPTS/build_notes.py`의 맨 위 설명에 있다.
+데이터는 `<과목 폴더>/.study-highway/notes/<id>/`에 JSON으로 쓴다. `<id>`는 `w3-rtsensor3`처럼 주차와 파일 이름으로 짧게 정한다. 파일 형식과 본문 표기법은 `$SCRIPTS/build_notes.py`의 맨 위 설명에 있다.
 
 | 파일 | 내용 |
 |---|---|
@@ -163,7 +163,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/build_notes.py" "<notes 폴더>" --kind quiz --o
 
 과목마다 예제집 아티팩트 하나를 만들고, 새 자료가 들어올 때마다 예제를 더해 같은 URL로 다시 발행한다. 퀴즈는 만들지 않는다.
 
-데이터는 `<과목 폴더>/.lecture-sync/examples/`에 둔다. 파일 형식, 그림(SVG) 규칙, 본문 표기법은 `$SCRIPTS/build_examples.py`의 맨 위 설명에 있다.
+데이터는 `<과목 폴더>/.study-highway/examples/`에 둔다. 파일 형식, 그림(SVG) 규칙, 본문 표기법은 `$SCRIPTS/build_examples.py`의 맨 위 설명에 있다.
 
 | 파일 | 내용 |
 |---|---|
@@ -211,7 +211,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/build_examples.py" "<examples 폴더>" --out "<e
 
 ### 5. 지식 그래프 갱신
 
-그래프 데이터는 `<과목 폴더>/.lecture-sync/graph.json`이다. 형식은 `$SCRIPTS/build_graph.py`의 맨 위 설명에 있다. 파일이 없으면 이 과목의 첫 그래프로 새로 만든다.
+그래프 데이터는 `<과목 폴더>/.study-highway/graph.json`이다. 형식은 `$SCRIPTS/build_graph.py`의 맨 위 설명에 있다. 파일이 없으면 이 과목의 첫 그래프로 새로 만든다.
 
 **항목과 연결을 추가하는 방법**
 
@@ -228,7 +228,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/build_examples.py" "<examples 폴더>" --out "<e
 6. 다음을 실행해 겹침이 0건이 될 때까지 좌표와 경로(`sides`, `pts`)를 고친다.
 
 ```bash
-bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --check
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.study-highway/graph.json" --check
 ```
 
 7. `style`이 `"examples"`이면 `refs`에 그 개념을 쓰는 예제 링크(`<예제집 url>#<예제 id>`)를 단다. 아래 보충본 링크 규칙은 `"slides"`일 때 쓴다.
@@ -237,7 +237,7 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/g
 9. HTML을 만들고 발행한다.
 
 ```bash
-bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.lecture-sync/graph.json" --out "<과목 폴더>/.lecture-sync/graph.html"
+bash "$SCRIPTS/py.sh" "$SCRIPTS/build_graph.py" "<과목 폴더>/.study-highway/graph.json" --out "<과목 폴더>/.study-highway/graph.html"
 ```
 
 - `artifact_url`이 있으면 그 URL로 다시 발행한다(`url` 지정). 없으면 새로 발행하고, 나온 URL을 `graph.json`의 `artifact_url`에 저장한다.

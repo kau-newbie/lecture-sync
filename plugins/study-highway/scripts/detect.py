@@ -2,7 +2,7 @@
 """강의자료 폴더의 변경을 감지한다.
 
 기본 동작(SessionStart 훅): stdin의 훅 JSON에서 cwd를 읽고, 위쪽 폴더로 올라가며
-`.lecture-sync.json`을 찾는다. 없으면 아무것도 출력하지 않는다. 있으면 새 파일과
+`.study-highway.json`을 찾는다. 없으면 아무것도 출력하지 않는다. 있으면 새 파일과
 수정된 파일을 찾아, 있을 때만 클로드에게 전달할 JSON을 출력한다.
 
 옵션:
@@ -11,7 +11,7 @@
   --baseline       현재 파일을 모두 처리 완료로 기록한다. 변경으로 보고하지 않는다.
   --commit [파일]  지정한 파일(폴더 기준 상대 경로)을 처리 완료로 기록한다. 파일을 생략하면 전부 기록한다.
 
---list 출력의 style, transcript는 과목 설정(.lecture-sync.json)의 정리 방식과 강의 영상 스크립트 사용 여부다.
+--list 출력의 style, transcript는 과목 설정(.study-highway.json)의 정리 방식과 강의 영상 스크립트 사용 여부다.
 값이 null이면 아직 정하지 않은 것이므로 스킬이 사용자에게 묻고 설정 파일에 저장한다.
 
 같은 내용의 파일(다운로드 중복 표시 "(1)" 등)은 sha256이 같으면 새 자료로 보지 않는다.
@@ -25,8 +25,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-CONFIG = ".lecture-sync.json"
-STATE_DIR = ".lecture-sync"
+CONFIG = ".study-highway.json"
+STATE_DIR = ".study-highway"
+LEGACY_CONFIG = ".lecture-sync.json"  # 0.5.x까지 쓰던 이름. 0.6.0부터 study-highway로 바뀌었다.
+LEGACY_STATE = ".lecture-sync"
 MANIFEST = "manifest.json"
 DEFAULT_EXT = [".pptx", ".ppt", ".pdf"]
 STYLES = ("slides", "examples")
@@ -41,10 +43,20 @@ def study_options(cfg):
     return style, tr
 
 
+def migrate(root):
+    """옛 이름(.lecture-sync.json, .lecture-sync/)을 새 이름으로 옮긴다. 새 이름이 이미 있으면 건드리지 않는다."""
+    for old, new in ((LEGACY_CONFIG, CONFIG), (LEGACY_STATE, STATE_DIR)):
+        src, dst = root / old, root / new
+        if src.exists() and not dst.exists():
+            src.rename(dst)
+            print(f"study-highway: {src.name}을(를) {dst.name}(으)로 옮겼습니다.", file=sys.stderr)
+
+
 def find_root(start):
     p = Path(start).resolve()
     for d in [p, *p.parents]:
-        if (d / CONFIG).is_file():
+        if (d / CONFIG).is_file() or (d / LEGACY_CONFIG).is_file():
+            migrate(d)
             return d
     return None
 
@@ -171,28 +183,28 @@ def main():
     if first_run:
         # 처음 설정한 과목은 기존 파일을 모두 처리할지 사용자가 정한다.
         context = (
-            f"[lecture-sync] '{course}' 폴더가 처음 설정되었습니다. 기존 강의자료가 {len(new)}개 있습니다.\n"
-            "사용자의 첫 요청을 처리하기 전에 /lecture-sync:sync 스킬을 실행하세요. "
+            f"[study-highway] '{course}' 폴더가 처음 설정되었습니다. 기존 강의자료가 {len(new)}개 있습니다.\n"
+            "사용자의 첫 요청을 처리하기 전에 /study-highway:sync 스킬을 실행하세요. "
             "스킬의 '처음 실행' 절차에 따라 기존 자료를 모두 정리할지, 처리한 것으로 기록만 할지, "
             "정리 방식(장별 보충본 또는 예시 위주 예제집)과 강의 영상 스크립트 사용 여부를 사용자에게 묻습니다."
         )
         print(json.dumps({
-            "systemMessage": f"lecture-sync: '{course}' 폴더를 처음 확인했습니다. 기존 자료 {len(new)}개.",
+            "systemMessage": f"study-highway: '{course}' 폴더를 처음 확인했습니다. 기존 자료 {len(new)}개.",
             "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context},
         }, ensure_ascii=False))
         return
     lines = [f"- {r} (신규)" for r in new] + [f"- {r} (수정)" for r in modified]
     context = (
-        f"[lecture-sync] '{course}' 폴더에서 처리하지 않은 강의자료 {len(lines)}건을 감지했습니다.\n"
+        f"[study-highway] '{course}' 폴더에서 처리하지 않은 강의자료 {len(lines)}건을 감지했습니다.\n"
         + "\n".join(lines)
-        + "\n사용자의 첫 요청을 처리하기 전에 /lecture-sync:sync 스킬을 실행하세요. "
+        + "\n사용자의 첫 요청을 처리하기 전에 /study-highway:sync 스킬을 실행하세요. "
           + ("정리 방식과 강의 영상 스크립트 사용 여부가 아직 정해지지 않았으므로 먼저 사용자에게 묻습니다. "
              if style is None or tr is None else "")
         + "정리 문서 작성, 지식 그래프 갱신, 알림 메일 발송까지 진행합니다. "
           "시작하기 전에 처리할 파일을 사용자에게 한 줄로 알립니다."
     )
     print(json.dumps({
-        "systemMessage": f"lecture-sync: 새 강의자료 {len(lines)}건을 감지했습니다.",
+        "systemMessage": f"study-highway: 새 강의자료 {len(lines)}건을 감지했습니다.",
         "hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": context},
     }, ensure_ascii=False))
 
@@ -203,5 +215,5 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     except Exception as e:  # 훅이 세션 시작을 막지 않도록 한다.
-        print(f"lecture-sync 오류: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"study-highway 오류: {type(e).__name__}: {e}", file=sys.stderr)
     sys.exit(0)

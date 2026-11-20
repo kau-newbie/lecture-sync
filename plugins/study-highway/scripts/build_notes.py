@@ -4,7 +4,7 @@
 사용: build_notes.py NOTES_DIR --kind notes|quiz --out OUT.html
       build_notes.py NOTES_DIR --check
 
-NOTES_DIR는 <과목 폴더>/.lecture-sync/notes/<id>/ 이다. 안에 다음 파일을 둔다.
+NOTES_DIR는 <과목 폴더>/.study-highway/notes/<id>/ 이다. 안에 다음 파일을 둔다.
 
 meta.json
 {

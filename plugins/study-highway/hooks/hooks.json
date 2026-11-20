@@ -1,5 +1,5 @@
 {
-  "description": "세션을 시작할 때 강의자료 폴더의 변경을 확인합니다. .lecture-sync.json이 없는 폴더에서는 아무 동작도 하지 않습니다.",
+  "description": "세션을 시작할 때 강의자료 폴더의 변경을 확인합니다. .study-highway.json이 없는 폴더에서는 아무 동작도 하지 않습니다.",
   "hooks": {
     "SessionStart": [
       {

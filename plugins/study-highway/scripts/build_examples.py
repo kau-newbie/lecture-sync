@@ -4,7 +4,7 @@
 사용: build_examples.py EXAMPLES_DIR --out OUT.html
       build_examples.py EXAMPLES_DIR --check
 
-EXAMPLES_DIR는 <과목 폴더>/.lecture-sync/examples/ 이다. 과목마다 예제집은 하나이고,
+EXAMPLES_DIR는 <과목 폴더>/.study-highway/examples/ 이다. 과목마다 예제집은 하나이고,
 새 강의자료가 들어오면 예제 파일을 더해 같은 URL로 다시 발행한다. 안에 다음 파일을 둔다.
 
 meta.json
