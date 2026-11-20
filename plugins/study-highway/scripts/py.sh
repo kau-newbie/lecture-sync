@@ -9,5 +9,5 @@ for c in python3 python "py -3"; do
     exec $c "$@"
   fi
 done
-echo "lecture-sync: Python 3.9 이상을 찾지 못했습니다. https://www.python.org 에서 설치하세요." >&2
+echo "study-highway: Python 3.9 이상을 찾지 못했습니다. https://www.python.org 에서 설치하세요." >&2
 exit 127

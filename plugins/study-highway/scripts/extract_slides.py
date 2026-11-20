@@ -130,7 +130,7 @@ def ppt_to_pptx(src, dst):
     ps = find_powershell()
     if not ps:
         raise RuntimeError("구형 .ppt를 변환하려면 Windows 또는 WSL에서 PowerPoint가 필요합니다. PowerShell을 찾지 못했습니다.")
-    work = Path(tempfile.mkdtemp(prefix="lecture-sync-"))
+    work = Path(tempfile.mkdtemp(prefix="study-highway-"))
     try:
         tmp_src, tmp_dst = work / "src.ppt", work / "out.pptx"
         shutil.copyfile(src, tmp_src)
@@ -154,7 +154,7 @@ def ppt_slides(path, keep=None):
     if keep:
         ppt_to_pptx(path, keep)
         return pptx_slides(keep)
-    fd, tmp = tempfile.mkstemp(suffix=".pptx", prefix="lecture-sync-")
+    fd, tmp = tempfile.mkstemp(suffix=".pptx", prefix="study-highway-")
     os.close(fd)
     try:
         ppt_to_pptx(path, tmp)
