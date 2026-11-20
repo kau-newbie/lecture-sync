@@ -29,6 +29,7 @@ description: 강의자료 폴더에 새 파일이나 수정된 파일이 있을 
 | `extensions` | 강의자료 확장자. 기본값은 `.pptx`, `.ppt`, `.pdf` |
 | `style` | 정리 방식. `"slides"`(장별 보충본과 퀴즈) 또는 `"examples"`(예시 위주 예제집). 없으면 2단계에서 묻는다 |
 | `transcript` | 강의 영상 스크립트 사용 여부. `{"enabled": true, "browser": "chrome"}`처럼 쓴다. `browser`는 `"chrome"` 또는 `"edge"`. 쓰지 않으면 `{"enabled": false}`. 없으면 2단계에서 묻는다 |
+| `figures` | 개념 그림(anatomy-opt) 사용 여부. `{"enabled": true}`처럼 쓴다. 없거나 false이면 쓰지 않는다. 묻지 않는다 |
 
 설정 파일이 없으면 사용자에게 알리고 멈춘다. 만드는 방법은 `README.md`에 있다.
 
@@ -61,6 +62,8 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/extract_slides.py" "<파일>"
 ### 4. 정리 문서 작성
 
 `style`이 `"slides"`이면 이 스킬 폴더의 `steps/slides.md`(4-A. 장별 보충본과 퀴즈)를, `"examples"`이면 `steps/examples.md`(4-B. 예시 위주 예제집)를 읽고 따른다. 다른 방식의 파일은 읽지 않는다.
+
+`figures.enabled`가 true이면 이 스킬 폴더의 `steps/figures.md`(4-1. 개념 그림)를 읽고 따른다. false이거나 없으면 읽지 않는다. 그림을 그리면 5단계 패치에 그림 링크(`refs_add`)를 함께 넣는다.
 
 ### 5. 지식 그래프 갱신
 
@@ -143,4 +146,4 @@ bash "$SCRIPTS/py.sh" "$SCRIPTS/detect.py" --root "<과목 폴더>" --commit "<�
 
 ### 9. 사용자에게 보고
 
-다음을 짧게 알린다: 처리한 파일, 정리 문서 링크(보충본과 퀴즈, 또는 예제집), 그래프 링크, 강의 영상 스크립트 반영 여부, 메일 발송 여부, 확인하지 못한 부분.
+다음을 짧게 알린다: 처리한 파일, 정리 문서 링크(보충본과 퀴즈, 또는 예제집), 그래프 링크, 그린 개념 그림 링크, 강의 영상 스크립트 반영 여부, 메일 발송 여부, 확인하지 못한 부분.
