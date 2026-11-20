@@ -108,6 +108,7 @@ setx GMAIL_APP_PASSWORD "앱 비밀번호 16자리"
 | `extensions` | 강의자료로 볼 확장자. 생략하면 `.pptx`, `.ppt`, `.pdf` |
 | `style` | (선택) 정리 방식. `"slides"`(장별 보충본과 퀴즈) 또는 `"examples"`(예시 위주 예제집). 생략하면 처음 실행할 때 묻고 저장합니다 |
 | `transcript` | (선택) 강의 영상 스크립트 사용 여부. 예: `{"enabled": true, "browser": "chrome"}`. `browser`는 `"chrome"` 또는 `"edge"`. 쓰지 않으려면 `{"enabled": false}`. 생략하면 처음 실행할 때 묻고 저장합니다 |
+| `figures` | (선택) 개념 그림 사용 여부. 예: `{"enabled": true}`. 생략하면 쓰지 않습니다. 묻지도 않습니다 |
 
 `style`과 `transcript`는 직접 쓰지 않아도 됩니다. 처음 실행할 때 고른 값이 이 파일에 저장됩니다. 나중에 바꾸려면 값을 고치거나 Claude에게 바꿔 달라고 하면 됩니다. 방식을 바꾸면 새로 들어오는 자료부터 새 방식으로 정리합니다.
 
@@ -135,6 +136,17 @@ setx GMAIL_APP_PASSWORD "앱 비밀번호 16자리"
 - 읽은 텍스트는 과목 폴더의 `.study-highway/transcripts/`에만 저장합니다. 보충본에는 장마다 "강의 설명" 칸으로, 예제집에는 예제의 "강의 설명" 칸으로 들어갑니다.
 - 스크립트는 음성 인식 결과일 수 있어 용어가 틀릴 수 있습니다. 슬라이드와 맞춰 확인되는 내용만 쓰고 출처를 표시합니다.
 - 강의 영상과 자막의 이용 조건은 학교나 강의 사이트의 규정을 따르세요. 정리 문서를 다른 사람과 공유할 때도 마찬가지입니다.
+
+## 개념 그림 (선택)
+
+`figures`를 켜면, 정리가 끝난 뒤 그림으로 그릴 만한 개념을 최대 2개 골라 보여 주고, 사용자가 고른 것만 그립니다. 그림은 같은 플러그인 안의 `anatomy-opt` 스킬이 만듭니다. `anatomy-opt`는 개념을 실제 기계 한 대로 그려, 숫자를 바꾸면 부품이 움직이는 등각투영 HTML 그림(Figure)을 만듭니다. 만든 그림은 지식 그래프 항목의 링크에 붙고, 알림 메일에도 들어갑니다.
+
+- 알맞은 과목: 유체역학, 열역학, 기계, 전자기기, 반도체처럼 값을 바꾸면 결과가 연속으로 변하는 모델이 있는 과목입니다. 식이나 알고리즘 위주의 과목에는 알맞지 않습니다.
+- 후보 조건: 값에 따라 결과가 변하는 모델이 있고, 슬라이드 두 장 이상에 나오며, 슬라이드에서 확인한 식이나 수치가 있어야 합니다.
+- 비용: 그림 하나에 약 $1입니다(Sonnet 5.5, 긴 세션에서 측정). 그림은 새 컨텍스트의 하위 에이전트가 그리므로 정리 세션의 대화를 다시 읽지 않습니다. 하위 에이전트가 그릴 때의 비용은 아직 측정하지 않았습니다.
+- 저장 위치: `.study-highway/figures/<개념 id>/`.
+- 이 플러그인을 설치하면 `anatomy-opt`가 스킬 목록에 `study-highway:anatomy-opt`로 함께 나타납니다. 이름과 설명이 세션마다 대화에 들어가므로 토큰이 조금 듭니다. 따로 설치한 `anatomy-opt`가 있어도 서로 겹치지 않습니다.
+- `anatomy-opt`는 MIT 라이선스의 오픈소스 `anatomy` 스킬을 토큰 사용량이 적도록 고친 것입니다. 원본의 저작권 표시와 라이선스 문구는 `skills/anatomy-opt/LICENSE`에 그대로 있습니다.
 
 ## 권장 폴더 구조
 
@@ -208,6 +220,8 @@ plugins/study-highway/
   .claude-plugin/plugin.json        플러그인 정보
   hooks/hooks.json                  세션 시작 시 변경 확인
   skills/sync/SKILL.md              정리 절차
+  skills/sync/steps/                방식별 절차 (slides, examples, first-run, transcript, figures)
+  skills/anatomy-opt/               개념 그림을 그리는 스킬 (MIT, 원본 anatomy를 고친 것)
   scripts/detect.py                 변경 감지와 처리 기록
   scripts/py.sh                     운영체제에 맞는 Python을 찾아 스크립트 실행
   scripts/extract_slides.py         슬라이드별 글자 추출
