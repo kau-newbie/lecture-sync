@@ -231,3 +231,12 @@ plugins/study-highway/
 ## 라이선스
 
 MIT 라이선스입니다. 자세한 내용은 `LICENSE` 파일에 있습니다.
+
+## 토큰을 줄이는 구조 (0.7.1)
+
+한 번 실행할 때 읽고 쓰는 양을 줄이려고 다음을 바꿨다. 정리 결과의 형식은 그대로다.
+
+- `skills/sync/SKILL.md`에는 모든 실행에 필요한 절차만 있다. 정리 방식별 절차(`steps/slides.md`, `steps/examples.md`), 첫 실행 설정(`steps/first-run.md`), 강의 영상 스크립트 수집(`steps/transcript.md`)은 필요할 때만 읽는다.
+- `scripts/graph_tool.py`는 `graph.json`을 통째로 읽지 않고 `summary`(요약), `show`(일부 항목), `patch`(변경분만 적용)로 보고 고친다. 원본의 들여쓰기 서식과 끝 줄바꿈을 그대로 둔다.
+- 스크립트 맨 위의 형식 설명은 줄 범위(`build_notes.py` 1~70줄 등)만 읽는다.
+- 주차별 흐름 한 줄은 과목 `CLAUDE.md`가 아니라 `.study-highway/flow.md`에 더한다. `CLAUDE.md`는 요청마다 읽히기 때문이다.
